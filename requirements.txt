@@ -1,0 +1,8 @@
+loguru
+flet
+datagoose==1.6.1
+rx
+dependency-injector
+pydantic
+pydantic-settings
+aiohttp
