@@ -12,9 +12,9 @@ class BookingRepositoryImpl(BookingRepository):
         self.booking_remote_datasource = booking_remote_datasource
         self.booking_remapper = booking_remapper
 
-    def get_all_bookings(self) -> List[BookingEntity]:
+    async def get_all_bookings(self) -> List[BookingEntity]:
         try:
-            response = self.booking_remote_datasource.get_all_bookings()
+            response = await self.booking_remote_datasource.get_all_bookings()
             booking_entities = BookingRemapper.map_network_dto(
                 booking_dto=response)
             return booking_entities

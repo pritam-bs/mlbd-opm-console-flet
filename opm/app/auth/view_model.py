@@ -59,7 +59,8 @@ class SplashViewModel:
 
     def check_authentication(self, prev_state: SplashState):
         auth_entity = self.get_auth_usecase.run()
-        current_state = prev_state.mutate(is_authenticated=False)
+        current_state = prev_state.mutate(
+            is_authenticated=auth_entity is not None)
         return current_state
 
     async def submit(self, state: SplashState):

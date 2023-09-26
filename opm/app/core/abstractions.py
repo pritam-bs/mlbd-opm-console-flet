@@ -95,7 +95,7 @@ class BaseView(ABC, UserControl):
         """
         return
 
-    def on_window_resized_listener(self, width, height):
+    async def on_window_resized_listener(self, width, height):
         """sets the page width and height"""
         self.page_width = width
         self.page_height = height

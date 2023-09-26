@@ -7,5 +7,5 @@ from ....domain.error.app_error import AppException
 class BookingRepository(ABC):
 
     @abstractmethod
-    def get_all_bookings() -> List[BookingEntity]:
+    async def get_all_bookings() -> List[BookingEntity]:
         pass

@@ -21,6 +21,7 @@ from opm.app.core.route_view import RouteView
 from opm.app.core.utils import AlertDialogControls
 from opm.app.core.views import Heading
 from opm.app.error_views.page_not_found_screen import ErrorScreen
+from opm.app.home.view import HomeScreen
 from opm.app.routes.route import HOME_SCREEN, SPLASH_SCREEN
 
 
@@ -57,8 +58,8 @@ class OpmApp:
 
     async def page_resize(self, e):
         if self.current_route_view:
-            self.current_route_view.on_window_resized(
-                self.page.window_width, self.page.window_height
+            await self.current_route_view.on_window_resized(
+                self.page.width, self.page.height
             )
 
     def on_theme_mode_changed(self, selected_theme: str):
@@ -113,10 +114,10 @@ class OpmApp:
                 dialog.open = False
                 self.page.update_async()
 
-    def change_route(self, to_route: str, data: Optional[any] = None):
+    async def change_route(self, to_route: str, data: Optional[any] = None):
         """navigates to a new route"""
         newRoute = to_route if data is None else f"{to_route}/{data}"
-        self.page.go_async(newRoute)
+        await self.page.go_async(newRoute)
 
     async def on_view_pop(self, view: Optional[View] = None):
         """invoked on back pressed"""
@@ -166,8 +167,8 @@ class OpmApp:
 
         self.current_route_view: RouteView = self.route_to_route_view_cache[event.route]
         await self.page.update_async()
-        self.current_route_view.on_window_resized(
-            self.page.window_width, self.page.window_height
+        await self.current_route_view.on_window_resized(
+            self.page.width, self.page.height
         )
 
     async def build(self):
@@ -229,10 +230,10 @@ class OpmRoutes:
             screen = SplashScreen(
                 params=self.view_params,
             )
-        # elif routePath.match(HOME_SCREEN):
-        #     screen = HomeScreen(
-        #         params=self.view_params,
-        #     )
+        elif routePath.match(HOME_SCREEN):
+            screen = HomeScreen(
+                params=self.view_params,
+            )
         else:
             screen = ErrorScreen(params=self.view_params)
 
