@@ -1,5 +1,5 @@
 from opm_app import OpmApp
-from flet import app, Page
+from flet import app, Page, FLET_APP_WEB, WEB_BROWSER, FLET_APP
 import os
 from opm.app.logging.configure_logging import configure_logging
 from loguru import logger
@@ -33,4 +33,5 @@ if __name__ == "__main__":
         target=main,
         assets_dir="opm/app/assets",
         upload_dir=get_assets_uploads_url(with_parent_dir=True),
+        view=FLET_APP
     )

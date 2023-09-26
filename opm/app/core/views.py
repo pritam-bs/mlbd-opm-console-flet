@@ -153,7 +153,7 @@ class BodyText(Text):
 
     def __init__(
         self,
-        txt: str = "",
+        text: str = "",
         size: int = fonts.BODY_1_SIZE,
         color: Optional[str] = None,
         show: bool = True,
@@ -163,7 +163,7 @@ class BodyText(Text):
     ):
         super().__init__(
             col=col,
-            value=txt,
+            value=text,
             color=color,
             size=size,
             visible=show,
@@ -358,7 +358,7 @@ class AppLogo(Container):
         super().__init__(
             width=width,
             content=Image(
-                src=image_paths.logoPath, fit=utils.CONTAIN, semantics_label="logo"
+                src=image_paths.logo_path, fit=utils.CONTAIN, semantics_label="logo"
             ),
         )
 
@@ -527,7 +527,7 @@ class DateSelector(UserControl):
         self.view = Container(
             content=Column(
                 controls=[
-                    BodyText(txt=self.label, color=self.label_color),
+                    BodyText(text=self.label, color=self.label_color),
                     Row(
                         [
                             self.day_dropdown,
@@ -590,7 +590,7 @@ class AlertDisplayPopUp(DialogHandler):
                         ),
                         Spacer(xs_space=True),
                         BodyText(
-                            txt=description,
+                            text=description,
                             size=fonts.SUBTITLE_1_SIZE,
                             color=colors.ERROR_COLOR if is_error else None,
                         ),
@@ -639,7 +639,7 @@ class ConfirmDisplayPopUp(DialogHandler):
                         ),
                         Spacer(xs_space=True),
                         BodyText(
-                            txt=description,
+                            text=description,
                             size=fonts.SUBTITLE_1_SIZE,
                         ),
                     ],

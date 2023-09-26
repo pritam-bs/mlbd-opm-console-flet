@@ -8,5 +8,5 @@ class BookingUsecase:
     def __init__(self, booking_repository: BookingRepository):
         self.booking_repository = booking_repository
 
-    def run(self) -> Union[List[BookingEntity], AppException]:
-        return self.booking_repository.get_all_bookings()
+    async def run(self) -> Union[List[BookingEntity], AppException]:
+        return await self.booking_repository.get_all_bookings()

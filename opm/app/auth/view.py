@@ -1,12 +1,11 @@
 from opm.app.core.res import fonts, image_paths
 from ..auth.view_model import SplashState
 from ..core.abstractions import BaseView, ViewParams
-from typing import Callable, Optional
+from typing import Optional
 from ..routes.route import HOME_SCREEN
 from ..core import views
 from ..core import utils
 from ..core.res import dimens
-from ..core.intent_result import IntentResult
 from ..auth.intent import SplashIntent
 from loguru import logger
 
@@ -121,7 +120,7 @@ class SplashScreen(BaseView):
             await self.client_storage.clear_preferences()
             self.set_login_form()
         elif compared_state.is_authenticated == True:
-            # self.navigate_to_route(HOME_SCREEN)
+            await self.navigate_to_route(HOME_SCREEN)
             logger.debug("navigate_to_route(HOME_SCREEN)")
 
         if compared_state.is_loading == True:
@@ -179,7 +178,7 @@ class SplashScreen(BaseView):
                         controls=[
                             views.Spacer(md_space=True),
                             views.ImageView(
-                                image_paths.splashImgPath,
+                                image_paths.splash_img_path,
                                 "welcome screen image",
                                 width=300,
                             ),
