@@ -6,3 +6,11 @@ dependency-injector
 pydantic
 pydantic-settings
 aiohttp
+opencv-python
+numpy
+onnxruntime
+# ./wheels/onnxruntime_gpu-1.11.0-cp38-cp38-linux_aarch64.whl
+scipy
+scikit-learn
+pySqsListener
+aiobotocore

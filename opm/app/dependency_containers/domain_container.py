@@ -1,5 +1,6 @@
 from dependency_injector import containers, providers
 
+from ..domain.usecase.face_recognition_usecase import FaceRecognitionUsecase
 from ..domain.usecase.get_auth_usecase import GetAuthUsecase
 from ..domain.usecase.save_auth_usecase import SaveAuthUsecase
 from ..domain.services.auth.auth_repository_impl import AuthRepositoryImpl
@@ -10,6 +11,13 @@ from ..domain.services.booking.booking_repository_impl import BookingRepositoryI
 from ..domain.services.auth.token_repository_impl import TokenRepositoryImpl
 from ..domain.services.auth.token_dto_remapper import TokenRemapper
 from ..domain.usecase.get_token_usecase import GetTokenUsecase
+from ..domain.services.face_recognition.face_recognition_repository_impl import FaceRecognitionRepositoryImpl
+from ..domain.services.synchronizer.booking_sqs_repository_impl import BookingSqsRepositoryImpl
+from ..domain.services.synchronizer.model_sqs_repository_impl import ModelSqsRepositoryImpl
+from ..domain.services.model_downloader.model_downloader_repository_impl import ModelDownloaderRepositoryImpl
+from ..domain.usecase.booking_synchronizer_usecase import BookingSynchronizerUsecase
+from ..domain.usecase.model_synchronizer_usecase import ModelSynchronizerUsecase
+from ..domain.usecase.model_downloader_usecase import ModelDownloaderUsecase
 
 
 class DomainContainer(containers.DeclarativeContainer):
@@ -32,6 +40,18 @@ class DomainContainer(containers.DeclarativeContainer):
     # Crate a dependency provider since it depends on data_container
     token_remote_datasource_dependency = providers.Dependency()
 
+    # Crate a dependency provider since it depends on data_container
+    booking_sqs_remote_datasource_dependency = providers.Dependency()
+
+    # Crate a dependency provider since it depends on data_container
+    model_sqs_remote_datasource_dependency = providers.Dependency()
+
+    # Crate a dependency provider since it depends on data_container
+    model_downloader_remote_datasource_dependency = providers.Dependency()
+
+    # Crate a dependency provider since it depends on data_container
+    face_recognition_datasource_dependency = providers.Dependency()
+
     # Create a provider for AuthRepositoryImpl. Dependencies will be injected from the DataContainer.
     auth_repository_impl = providers.Singleton(
         AuthRepositoryImpl,
@@ -51,6 +71,31 @@ class DomainContainer(containers.DeclarativeContainer):
         TokenRepositoryImpl,
         token_remote_datasource=token_remote_datasource_dependency,
         token_remapper=token_remapper
+    )
+
+    # Create a provider for FaceRecognitionRepositoryImpl. Dependencies will be injected from the DataContainer.
+    face_recognition_repository_impl = providers.Singleton(
+        FaceRecognitionRepositoryImpl,
+        face_recognition_datasource=face_recognition_datasource_dependency,
+        booking_repository=booking_repository_impl
+    )
+
+    # Create a provider for BookingSqsRepositoryImpl. Dependencies will be injected from the DataContainer.
+    bookin_sqs_repository_impl = providers.Singleton(
+        BookingSqsRepositoryImpl,
+        booking_sqs_remote_datasource=booking_sqs_remote_datasource_dependency
+    )
+
+    # Create a provider for ModelSqsRepositoryImpl. Dependencies will be injected from the DataContainer.
+    model_sqs_repository_impl = providers.Singleton(
+        ModelSqsRepositoryImpl,
+        model_sqs_remote_datasource=model_sqs_remote_datasource_dependency,
+    )
+
+    # Create a provider for ModelDownloaderRepositoryImpl. Dependencies will be injected from the DataContainer.
+    model_downloader_repository_impl = providers.Singleton(
+        ModelDownloaderRepositoryImpl,
+        model_downloader_remote_datasource=model_downloader_remote_datasource_dependency,
     )
 
     # Create a provider for GetAuthUsecase
@@ -76,4 +121,28 @@ class DomainContainer(containers.DeclarativeContainer):
         GetTokenUsecase,
         token_repository=token_repository_impl
 
+    )
+
+    # Create a provider for FaceRecognitionUsecase
+    face_recognition_usecase = providers.Factory(
+        FaceRecognitionUsecase,
+        face_recognition_repository=face_recognition_repository_impl
+    )
+
+    # Create a provider for BookingSynchronizerUsecase
+    booking_synchronizer_usecase = providers.Factory(
+        BookingSynchronizerUsecase,
+        booking_sqs_repository=bookin_sqs_repository_impl
+    )
+
+    # Create a provider for ModelSynchronizerUsecase
+    model_sychronizer_usecase = providers.Factory(
+        ModelSynchronizerUsecase,
+        model_sqs_repository=model_sqs_repository_impl
+    )
+
+    # Create a provider for ModelDownloaderUsecase
+    model_downloader_usecase = providers.Factory(
+        ModelDownloaderUsecase,
+        model_downloader_repository=model_downloader_repository_impl
     )

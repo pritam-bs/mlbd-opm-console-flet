@@ -4,6 +4,11 @@ from ..data.services.booking.data_source.remote.booking_remore_datasource import
 from ..data.api.api_client import APIClient
 from ..data.services.auth.data_source.remote.token_remote_datasource import TokenRemoteDatasource
 from ..settings.settings import settings
+from ..data.synchronizer.sqs_client import SqsClient
+from ..data.services.synchronizer.datasource.remote.booking_sqs_remote_datasource import BookingSqsRemoteDatasource
+from ..data.services.synchronizer.datasource.remote.model_sqs_remote_datasource import ModelSqsRemoteDatasource
+from ..data.model_downloader.model_downloader import ModelDownloader
+from ..data.services.model_downloader.datasource.remote.model_downloader_remote_datasource import ModelDownloaderRemoteDatasource
 
 
 class RemoteDataContainer(containers.DeclarativeContainer):
@@ -22,4 +27,32 @@ class RemoteDataContainer(containers.DeclarativeContainer):
     token_remote_datasource = providers.Singleton(
         TokenRemoteDatasource,
         api_client=api_client
+    )
+
+    # Create a provider for SqsClient
+    sqs_client = providers.Singleton(
+        SqsClient
+    )
+
+    # Create a provider for BookingSqsRemoteDatasource
+    booking_sqs_remote_datasource = providers.Singleton(
+        BookingSqsRemoteDatasource,
+        sqs_client=sqs_client
+    )
+
+    # Create a provider for ModelSqsRemoteDatasource
+    model_sqs_remote_datasource = providers.Singleton(
+        ModelSqsRemoteDatasource,
+        sqs_client=sqs_client
+    )
+
+    # Create a provider for ModelDownloader
+    model_downloader = providers.Singleton(
+        ModelDownloader
+    )
+
+    # Create a provider for ModelDownloaderRemoteDatasource
+    model_downloader_remote_datasource = providers.Singleton(
+        ModelDownloaderRemoteDatasource,
+        model_downloader=model_downloader
     )
