@@ -30,6 +30,7 @@ from ...core.res.image_paths import camera_img_path
 from ...domain.entities.booking_entity import BookingEntity, MealType
 from typing import Optional
 from ...core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
+from loguru import logger
 
 
 class FaceRecognitionControl(UserControl):
@@ -191,7 +192,9 @@ class FaceRecognitionControl(UserControl):
         pass
 
     async def update_control(self, state: HomeState, prev_state: Optional[HomeState]):
-        pass
+        if state.image:
+            self.face_preview.src_base64 = state.image
+        await self.update_async()
 
     async def on_window_resized_listener(self, width, height):
         self.page_width = width

@@ -48,8 +48,8 @@ class APIClient:
         self.auth_local_datasource = self.local_data_container.auth_local_datasource()
 
     def __del__(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._close())
+        logger.debug("APIClient del")
+        asyncio.ensure_future(self._close())
 
     async def _close(self):
         if self._session is not None:

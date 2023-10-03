@@ -1,5 +1,3 @@
-from typing import Union
-
 from ..entities.auth_entity import AuthEntity
 from ..services.auth.auth_repository import AuthRepository
 
