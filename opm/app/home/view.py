@@ -44,9 +44,10 @@ class HomeScreen(BaseView):
     async def update_control(self, state: HomeState, prev_state: Optional[HomeState]):
         await super().update_control(state, prev_state)
         compared_state = HomeState.compare(prev_state, state)
-        await self._booking_list_control.update_control(
-            state=state, prev_state=prev_state)
+
         await self._face_recognition_control.update_control(
+            state=state, prev_state=prev_state)
+        await self._booking_list_control.update_control(
             state=state, prev_state=prev_state)
 
     async def did_mount_async(self):
@@ -61,7 +62,6 @@ class HomeScreen(BaseView):
         logger.debug("Splash view did unmount")
         self.mounted = False
         self.intent.stop_face_recognition()
-        self.intent.dispose_all()
 
     def build(self):
         logger.info("Building Home view")

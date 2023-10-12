@@ -1,39 +1,28 @@
 from typing import Type, TypeVar, Generic
 from ..core.abstractions import State, BaseView
-from rx.subject import BehaviorSubject
-from rx import operators as ops
 from loguru import logger
 import asyncio
-from rx.scheduler.eventloop import AsyncIOScheduler
-
+from typing import List, Callable, Optional
 
 S = TypeVar('S', bound=State)
 
 
 class StateDriver(Generic[S]):
     def __init__(self, state_type: Type[S]):
-        self._relay = BehaviorSubject(state_type.initial_state())
+        self._state = state_type.initial_state()
+        self._listeners: List[Callable[[Optional[S], S], None]] = []
 
     @property
     def value(self) -> S:
-        return self._relay.value
+        return self._state
 
-    def accept(self, event: S):
-        self._relay.on_next(event)
+    async def accept(self, new_state: S):
+        old_state, self._state = self._state, new_state
+        for listener in self._listeners:
+            await listener(old_state, new_state)
 
     def bind(self, view: BaseView):
-        logger.debug("Binding view to state")
+        async def callback(old_state: Optional[S], new_state: S):
+            await view.update_control(new_state, old_state)
 
-        async def update_callback(pair):
-            await view.update_control(pair[1], pair[0])
-
-        def subscription_callback(pair):
-            asyncio.ensure_future(update_callback(pair))
-
-        disposable = self._relay.pipe(
-            ops.observe_on(AsyncIOScheduler(asyncio.get_event_loop())),
-            ops.pairwise(),
-            # ops.start_with((None, self._relay.value))
-        ).subscribe(subscription_callback)
-
-        return disposable
+        self._listeners.append(callback)

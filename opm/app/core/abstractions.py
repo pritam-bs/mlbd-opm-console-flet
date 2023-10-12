@@ -57,11 +57,11 @@ class ViewParams:
     page_scroll_type: Optional[str] = AUTO_SCROLL
 
 
-class State(ABC):
+class State:
     @classmethod
-    @abstractmethod
-    def initial_state(cls) -> 'State':
-        pass
+    def initial_state(cls):
+        # This method should return the initial state. Placeholder implementation.
+        raise NotImplementedError
 
 
 S = TypeVar('S', bound=State)

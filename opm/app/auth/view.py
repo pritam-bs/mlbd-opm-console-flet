@@ -46,11 +46,11 @@ class AuthDataForm(UserControl):
         self.form_err_control.value = error
         self.form_err_control.visible = error is not None or error != ""
 
-    def on_change_user_id_field(self, event: ControlEvent):
-        self.intent.change_user_id(user_id=event.data)
+    async def on_change_user_id_field(self, event: ControlEvent):
+        await self.intent.change_user_id(user_id=event.data)
 
-    def on_change_password_field(self, event: ControlEvent):
-        self.intent.change_password(password=event.data)
+    async def on_change_password_field(self, event: ControlEvent):
+        await self.intent.change_password(password=event.data)
 
     async def on_submit_btn_clicked(self, e):
         await self.intent.submit()
@@ -145,7 +145,7 @@ class SplashScreen(BaseView):
         logger.info("Splash view did mount")
         self.mounted = True
         self.intent.bind(view=self)
-        self.intent.check_auth()
+        await self.intent.check_auth()
         await super().did_mount_async()
 
     def build(self):

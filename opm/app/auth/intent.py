@@ -9,52 +9,45 @@ from typing import List
 class SplashIntent:
     def __init__(self):
         self._view_model = SplashViewModel()
-        self._disposables: List[Disposable] = []
 
     @property
     def current_state(self):
         return self._view_model.current_state
 
     def bind(self, view: BaseView):
-        disposable = self._view_model.state_driver.bind(view=view)
-        self._disposables.append(disposable)
+        self._view_model.state_driver.bind(view=view)
 
-    def check_auth(self):
+    async def check_auth(self):
         state = self._view_model.check_authentication()
-        self._view_model.state_driver.accept(event=state)
+        await self._view_model.state_driver.accept(new_state=state)
 
-    def change_user_id(self, user_id: str):
+    async def change_user_id(self, user_id: str):
         state = self._view_model.validate_input(
             prev_state=self.current_state, client_name=user_id)
-        self._view_model.state_driver.accept(event=state)
+        await self._view_model.state_driver.accept(new_state=state)
 
-    def change_password(self, password: str):
+    async def change_password(self, password: str):
         state = self._view_model.validate_input(
             prev_state=self.current_state, password=password)
-        self._view_model.state_driver.accept(event=state)
+        await self._view_model.state_driver.accept(new_state=state)
 
     async def submit(self):
         self.clear_error()
         self.show_loading()
         state = await self._view_model.submit(state=self.current_state)
-        self._view_model.state_driver.accept(event=state)
+        await self._view_model.state_driver.accept(new_state=state)
         self.hide_loading()
 
-    def show_loading(self):
+    async def show_loading(self):
         state = self._view_model.change_loading_state(
             state=self.current_state, is_loading=True)
-        self._view_model.state_driver.accept(event=state)
+        await self._view_model.state_driver.accept(new_state=state)
 
-    def hide_loading(self):
+    async def hide_loading(self):
         state = self._view_model.change_loading_state(
             state=self.current_state, is_loading=False)
-        self._view_model.state_driver.accept(event=state)
+        await self._view_model.state_driver.accept(new_state=state)
 
-    def clear_error(self):
+    async def clear_error(self):
         state = self._view_model.clear_error(state=self.current_state)
-        self._view_model.state_driver.accept(event=state)
-
-    def dispose_all(self):
-        for disposable in self._disposables:
-            disposable.dispose()
-        self._disposables.clear()
+        await self._view_model.state_driver.accept(new_state=state)

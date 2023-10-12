@@ -18,8 +18,6 @@ from flet import (
 )
 from typing import List
 from loguru import logger
-from rx.subject import Subject
-from rx.operators import distinct_until_changed
 from enum import Enum
 
 from ...home.intent import HomeIntent
@@ -70,13 +68,11 @@ class BookingListControl(UserControl):
     async def did_mount_async(self):
         await super().did_mount_async()
         self.is_mounted = True
-        self._config_scroll_behavior()
         await self.intent.get_bookings()
 
     async def will_unmount_async(self):
         await super().will_unmount_async()
         self.is_mounted = False
-        self.subscription.dispose()
 
     def build(self):
         self.summary_card = Card(
@@ -151,35 +147,27 @@ class BookingListControl(UserControl):
 
         return self._list_container
 
-    def _on_scroll(self, event: OnScrollEvent):
-        pixels = event.pixels
-        max_scroll_extent = event.max_scroll_extent
-        min_scroll_extent = event.min_scroll_extent
+    scroll_delta_threshold = 15.0
+    is_scroll_delta_exceeded = False
+    scroll_direction = None
 
-        if (min_scroll_extent - pixels) > 100:
-            self.scroll_behavior_subject.on_next(
-                ScrollBehavior.PULL_TO_REFRESH)
-        elif (pixels - max_scroll_extent) > 100:
-            self.scroll_behavior_subject.on_next(ScrollBehavior.PAGINATION)
-        else:
-            self.scroll_behavior_subject.on_next(ScrollBehavior.SCROLL)
+    async def _on_scroll(self, event: OnScrollEvent):
 
-    def _config_scroll_behavior(self):
-        def on_next(scroll_behavior):
-            logger.debug(scroll_behavior)
-            if scroll_behavior == ScrollBehavior.PULL_TO_REFRESH:
-                self.intent.get_bookings()
+        if event.event_type == "start":
+            self.is_scroll_delta_exceeded = False
 
-        def on_error(error):
-            logger.debug(error)
+        if event.event_type == "user":
+            self.scroll_direction = event.direction
 
-        def on_completed():
-            logger.debug("on_completed")
+        if event.scroll_delta is not None and event.scroll_delta > self.scroll_delta_threshold:
+            self.is_scroll_delta_exceeded = True
 
-        self.scroll_behavior_subject = Subject()
-        self.subscription = self.scroll_behavior_subject.pipe(
-            distinct_until_changed()).subscribe(
-            on_next=on_next, on_error=on_error, on_completed=on_completed)
+        if event.event_type == "end" and self.is_scroll_delta_exceeded:
+            if self.scroll_direction == "forward":
+                logger.debug("Pull To Refresh")
+                await self.intent.get_bookings()
+            elif self.scroll_direction == "reverse":
+                logger.debug("Next Page")
 
     async def _on_refresh_button_pressed(self, e):
         await self.intent.get_bookings()

@@ -95,7 +95,7 @@ class HomeViewModel:
     async def _on_image_received(self, image: str):
         state = self.current_state.mutate(image=image)
         if self._state_callback:
-            self._state_callback(state)
+            await self._state_callback(state)
 
     async def _on_match(self, booking_or_employee_id: Union[BookingEntity, str]):
         # Check if booking_or_employee_id is of type BookingEntity
