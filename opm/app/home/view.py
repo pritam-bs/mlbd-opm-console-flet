@@ -85,21 +85,6 @@ class HomeScreen(BaseView):
             expand=True,
         )
 
-        # self._face_recognition_container = Container(
-        #     content=Column(
-        #         controls=[
-        #             BodyText(text="Face Scanner")
-        #         ],
-        #         alignment=MainAxisAlignment.START,
-        #         horizontal_alignment=CrossAxisAlignment.CENTER,
-        #     ),
-        #     bgcolor=colors.BLUE,
-        #     expand=True
-        # )
-
-        # self._face_recognition_control.width = self.page_width - 300
-        # self._face_recognition_control.height = self.page_height - 30
-
         return Row(
             controls=[
                 self._list_container,

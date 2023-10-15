@@ -21,16 +21,6 @@ from ..domain.usecase.model_downloader_usecase import ModelDownloaderUsecase
 
 
 class DomainContainer(containers.DeclarativeContainer):
-
-    # Create a provider for AuthRemapper since it doesn't have any dependencies
-    auth_remapper = providers.Singleton(AuthRemapper)
-
-    # Crate a provert for BookingRemapper since it doesn't have any dependencies
-    booking_remapper = providers.Singleton(BookingRemapper)
-
-    # Crate a provert for TokenRemapper since it doesn't have any dependencies
-    token_remapper = providers.Singleton(TokenRemapper)
-
     # Create a dependency provider since it depends on data_container
     auth_local_datasource_dependency = providers.Dependency()
 
@@ -56,21 +46,18 @@ class DomainContainer(containers.DeclarativeContainer):
     auth_repository_impl = providers.Singleton(
         AuthRepositoryImpl,
         auth_local_datasource=auth_local_datasource_dependency,
-        auth_remapper=auth_remapper
     )
 
     # Create a provider for BookingRepositoryImpl. Dependencies will be injected from the DataContainer.
     booking_repository_impl = providers.Singleton(
         BookingRepositoryImpl,
         booking_remote_datasource=booking_remote_datasource_dependency,
-        booking_remapper=booking_remapper
     )
 
     # Create a provider for TokenRepositoryImpl. Dependencies will be injected from the DataContainer.
     token_repository_impl = providers.Singleton(
         TokenRepositoryImpl,
         token_remote_datasource=token_remote_datasource_dependency,
-        token_remapper=token_remapper
     )
 
     # Create a provider for FaceRecognitionRepositoryImpl. Dependencies will be injected from the DataContainer.

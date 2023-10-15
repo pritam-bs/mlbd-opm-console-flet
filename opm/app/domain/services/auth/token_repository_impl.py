@@ -8,10 +8,9 @@ from loguru import logger
 
 
 class TokenRepositoryImpl(TokenRepository):
-    def __init__(self, token_remote_datasource: TokenRemoteDatasource, token_remapper: TokenRemapper):
+    def __init__(self, token_remote_datasource: TokenRemoteDatasource):
         logger.info("Init TokenRepositoryImpl")
         self.token_remote_datasource = token_remote_datasource
-        self.token_remapper = token_remapper
 
     async def get_token(self, client_name: str, password: str) -> TokenEntity:
         try:

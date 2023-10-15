@@ -9,9 +9,8 @@ from functools import lru_cache
 
 
 class BookingRepositoryImpl(BookingRepository):
-    def __init__(self, booking_remote_datasource: BookingRemoteDatasource, booking_remapper: BookingRemapper):
+    def __init__(self, booking_remote_datasource: BookingRemoteDatasource):
         self.booking_remote_datasource = booking_remote_datasource
-        self.booking_remapper = booking_remapper
         self._booking_entities: List[BookingEntity] = []
 
     async def get_all_bookings(self) -> List[BookingEntity]:

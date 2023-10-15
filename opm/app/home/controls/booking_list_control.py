@@ -28,12 +28,6 @@ from ...home.view_model import HomeState
 from ...core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
 
 
-class ScrollBehavior(Enum):
-    PULL_TO_REFRESH = 1
-    PAGINATION = 2
-    SCROLL = 3
-
-
 class BookingListControl(UserControl):
 
     def __init__(
@@ -147,7 +141,7 @@ class BookingListControl(UserControl):
 
         return self._list_container
 
-    scroll_delta_threshold = 15.0
+    scroll_delta_threshold = 10.0
     is_scroll_delta_exceeded = False
     scroll_direction = None
 

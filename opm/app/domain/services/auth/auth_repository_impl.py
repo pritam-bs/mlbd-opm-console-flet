@@ -7,10 +7,9 @@ from loguru import logger
 
 
 class AuthRepositoryImpl(AuthRepository):
-    def __init__(self, auth_local_datasource: AuthLocalDatasouce, auth_remapper: AuthRemapper):
+    def __init__(self, auth_local_datasource: AuthLocalDatasouce):
         logger.info("Init AuthRepositoryImpl")
         self.auth_local_datasource = auth_local_datasource
-        self.auth_remapper = auth_remapper
 
     def get_auth_info(self) -> Optional[AuthEntity]:
         response = self.auth_local_datasource.get()
