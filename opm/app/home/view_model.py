@@ -5,10 +5,13 @@ from ..domain.error.app_error import AppException
 from ..dependency_containers.application_container import application_container_provider
 from ..core.abstractions import State
 from ..domain.entities.booking_entity import BookingEntity
+from ..domain.entities.model_change_entity import ModelChangeEntity
+from ..domain.entities.booking_change_entity import BookingChangeEntity
 
 from typing import Dict, Optional, List, Union, Callable
 from loguru import logger
 from ..core.state_driver import StateDriver
+import asyncio
 
 
 @dataclass(frozen=True)
@@ -106,30 +109,47 @@ class HomeViewModel:
         elif isinstance(booking_or_employee_id, str):
             logger.debug("booking_or_employee_id is a string")
 
-    def _start_model_synchronizer(self):
-        self.model_synchronizer_usecase.start(
-            on_model_change=self.on_model_change)
+    async def _start_model_synchronizer(self):
+        await self.model_synchronizer_usecase.start(
+            on_model_change=self._on_model_change)
 
     def _stop_model_synchronizer(self):
         self.model_synchronizer_usecase.stop()
 
-    def on_model_change(self, dict: Dict):
+    def _on_model_change(self, model_change_entity: ModelChangeEntity):
         pass
 
-    def _start_booking_synchronizer(self):
-        self.booking_synchronizer_usecase.start(
-            on_booking_change=self.on_booking_change)
+    async def _start_booking_synchronizer(self):
+        await self.booking_synchronizer_usecase.start(
+            on_booking_change=self._on_booking_change)
 
     def _stop_booking_synchronizer(self):
         self.booking_synchronizer_usecase.stop()
 
-    def on_booking_change(self, dict: Dict):
+    def _on_booking_change(self, booking_change_entity: BookingChangeEntity):
         pass
 
-    def _download_model(self):
-        self.model_downloader_usecase.download(callback=self.on_model_download)
+    def start_synchronizers(self):
+        self._booking_synchronizer_task = asyncio.create_task(
+            self._start_booking_synchronizer())
+        self._model_synchronizer_task = asyncio.create_task(
+            self._start_model_synchronizer())
 
-    def on_model_download(self, model_name: str, is_successful: bool):
+    def stop_synchronizers(self):
+        if self._booking_synchronizer_task is not None:
+            self._stop_booking_synchronizer()
+            self._booking_synchronizer_task = None
+        if self._model_synchronizer_task is not None:
+            self._stop_model_synchronizer()
+            self._model_synchronizer_task = None
+
+        self._stop_model_synchronizer()
+
+    def _download_model(self):
+        self.model_downloader_usecase.download(
+            callback=self._on_model_download)
+
+    def _on_model_download(self, model_name: str, is_successful: bool):
         pass
 
     def change_loading_state(self, is_loading: bool):

@@ -39,3 +39,9 @@ class HomeIntent:
 
     def stop_face_recognition(self):
         self._view_model.stop_face_recognition()
+
+    def start_synchronizer(self):
+        self._view_model.start_synchronizers()
+
+    def stop_model_synchronizer(self):
+        self._view_model.stop_synchronizers()

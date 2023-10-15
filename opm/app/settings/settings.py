@@ -18,8 +18,12 @@ class Settings(BaseSettings):
     aws_access_key_id: str = Field(alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = Field(alias="AWS_SECRET_ACCESS_KEY")
     region_name: str = Field(alias="REGION_NAME")
-    queue_url: str = Field(alias="QUEUE_URL")
-    queue_name: str = Field(alias="QUEUE_NAME")
+    booking_change_queue_name: str = Field(alias="BOOKING_CHANGE_QUEUE_NAME")
+    knn_model_change_queue_name: str = Field(alias="MODEL_CHANGE_QUEUE_NAME")
+    booking_change_wait_seconds: int = Field(
+        alias="BOOKING_CHANGE_WAIT_SECONDS")
+    knn_model_change_wait_seconds: int = Field(
+        alias="MODEL_CHANGE_WAIT_SECONDS")
     bucket_name: str = Field(alias="BUCKET_NAME")
 
 

@@ -52,16 +52,18 @@ class HomeScreen(BaseView):
 
     async def did_mount_async(self):
         await super().did_mount_async()
-        logger.info("Home view did mount")
         self.mounted = True
         self.intent.bind(view=self)
         self.intent.start_face_recognition()
+        self.intent.start_synchronizer()
+        logger.info("Home view did mount")
 
     async def will_unmount_async(self):
         await super().will_unmount_async()
-        logger.debug("Splash view did unmount")
         self.mounted = False
         self.intent.stop_face_recognition()
+        self.intent.stop_model_synchronizer()
+        logger.debug("Home view did unmount")
 
     def build(self):
         logger.info("Building Home view")
