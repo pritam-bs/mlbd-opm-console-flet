@@ -104,10 +104,13 @@ class HomeViewModel:
         # Check if booking_or_employee_id is of type BookingEntity
         if isinstance(booking_or_employee_id, BookingEntity):
             logger.debug("booking_or_employee_id is a BookingEntity instance")
+            logger.debug(
+                f"Booking for matched employee ID: {booking_or_employee_id}")
 
         # Check if booking_or_employee_id is of type str
         elif isinstance(booking_or_employee_id, str):
             logger.debug("booking_or_employee_id is a string")
+            logger.debug(f"Matched employee ID: {booking_or_employee_id}")
 
     async def _start_model_synchronizer(self):
         await self.model_synchronizer_usecase.start(

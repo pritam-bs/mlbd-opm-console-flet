@@ -11,9 +11,10 @@ class KnnSearch:
     distance_threshold = 0.6
 
     def __init__(self):
-        self.load_models()
+        pass
 
     def load_models(self):
+        logger.debug("Loading KNN model")
         model_dir = self.ensure_model_dir()
         knn_model_path = model_dir / settings.local_knn_model
         index_map_path = model_dir / settings.local_index_map
