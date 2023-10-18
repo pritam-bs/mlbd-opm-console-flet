@@ -1,4 +1,3 @@
-import asyncio
 from ...data.model.synchronizer.booking_change_dto import BookingChangeDTO
 from ...data.model.synchronizer.model_change_dto import ModelChangeDTO
 from ...settings.settings import settings
@@ -7,7 +6,7 @@ from aiobotocore.session import AioSession
 import botocore.exceptions
 from typing import Callable, Dict, Optional
 from loguru import logger
-import datetime
+import json
 
 # Define a type alias for the callable
 BookingChangeFunc = Callable[[Dict], None]
@@ -17,9 +16,9 @@ ModelChangeFunc = Callable[[Dict], None]
 class SqsClient:
 
     def __init__(self) -> None:
-        self.aws_access_key_id = settings.aws_access_key_id
-        self.aws_secret_access_key = settings.aws_secret_access_key
-        self.region_name = settings.region_name
+        self.aws_access_key_id = settings.aws_sqs_access_key
+        self.aws_secret_access_key = settings.aws_sqs_secret_access_key
+        self.region_name = settings.aws_sqs_region_name
         self.model_change_queue_name = settings.knn_model_change_queue_name
         self.booking_change_queue_name = settings.booking_change_queue_name
         self.model_wait_time_seconds = settings.knn_model_change_wait_seconds
@@ -106,8 +105,8 @@ class AsyncSqsListener:
                 for message in messages:
                     receipt_handle = message['ReceiptHandle']
                     message_body = message['Body']
-
-                    await self.handle_message(message_body)
+                    if self._is_valid_json(data_str=message_body):
+                        await self.handle_message(message_body)
                     try:
                         await client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
                     except Exception as err:
@@ -118,6 +117,13 @@ class AsyncSqsListener:
 
     def stop_listening(self):
         self.is_polling = False
+
+    def _is_valid_json(self, data_str):
+        try:
+            json.loads(data_str)
+            return True
+        except json.JSONDecodeError:
+            return False
 
 
 class ModelChangeListener(AsyncSqsListener):

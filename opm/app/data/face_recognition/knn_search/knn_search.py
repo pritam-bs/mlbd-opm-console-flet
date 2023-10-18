@@ -15,8 +15,8 @@ class KnnSearch:
 
     def load_models(self):
         model_dir = self.ensure_model_dir()
-        knn_model_path = model_dir / settings.knn_model
-        index_map_path = model_dir / settings.index_map
+        knn_model_path = model_dir / settings.local_knn_model
+        index_map_path = model_dir / settings.local_index_map
         # Check if knn model file exists and then attempt to load it
         if os.path.exists(knn_model_path):
             try:

@@ -24,5 +24,5 @@ class BookingRepositoryImpl(BookingRepository):
             raise AppException.from_response_error(response_error)
 
     @property
-    def get_cache_bookings(self) -> List[BookingEntity]:
+    def get_cached_bookings(self) -> List[BookingEntity]:
         return self._booking_entities

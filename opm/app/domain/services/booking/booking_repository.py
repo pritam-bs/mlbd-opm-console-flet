@@ -9,3 +9,7 @@ class BookingRepository(ABC):
     @abstractmethod
     async def get_all_bookings() -> List[BookingEntity]:
         pass
+
+    @property
+    def get_cached_bookings(self) -> List[BookingEntity]:
+        pass

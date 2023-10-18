@@ -56,7 +56,7 @@ class FaceRecognizer:
                 face_image_list=[face_image])
             matched_id = self._knn_search.search(embeddings=embeddings)
             if matched_id is not None:
-                self._on_match(matched_id)
+                await self._on_match(matched_id)
 
     def _face_extractor(self, frame):
         face_image = None

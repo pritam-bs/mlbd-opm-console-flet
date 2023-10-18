@@ -49,10 +49,10 @@ class FaceRecognitionRepositoryImpl(FaceRecognitionRepository):
         return img_str
 
     async def _on_match(self, employee_id: str):
-        booking_list = await self._booking_repository.get_all_bookings()
+        booking_list = self._booking_repository.get_cached_bookings
         matched_employee = self.get_booking_by_employee_id(
             bookings=booking_list, employee_id=employee_id)
-        self.on_match(matched_employee)
+        await self.on_match(matched_employee)
 
     def get_booking_by_employee_id(self, bookings: List[BookingEntity], employee_id: str) -> Union[BookingEntity, str]:
         for booking in bookings:

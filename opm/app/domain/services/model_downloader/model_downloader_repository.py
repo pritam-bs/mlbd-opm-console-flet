@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Callable
-CallbackFunc = Callable[[str, bool], None]
+CallbackFunc = Callable[[bool], None]
 
 
 class ModelDownloaderRepository(ABC):

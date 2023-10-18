@@ -13,18 +13,23 @@ class Settings(BaseSettings):
     db_name: str = Field(alias="DB_NAME")
     log_file_name: str = Field(alias="LOG_FILE_NAME")
     knn_directory: str = Field(alias="KNN_DIR")
-    knn_model: str = Field(alias="KNN_MODEL")
-    index_map: str = Field(alias="INDEX_MAP")
-    aws_access_key_id: str = Field(alias="AWS_ACCESS_KEY_ID")
-    aws_secret_access_key: str = Field(alias="AWS_SECRET_ACCESS_KEY")
-    region_name: str = Field(alias="REGION_NAME")
+    local_knn_model: str = Field(alias="LOCAL_KNN_MODEL")
+    local_index_map: str = Field(alias="LOCAL_INDEX_MAP")
+    aws_sqs_access_key: str = Field(alias="AWS_SQS_ACCESS_KEY")
+    aws_sqs_secret_access_key: str = Field(alias="AWS_SQS_SECRET_ACCESS_KEY")
+    aws_sqs_region_name: str = Field(alias="AWS_SQS_REGION_NAME")
     booking_change_queue_name: str = Field(alias="BOOKING_CHANGE_QUEUE_NAME")
     knn_model_change_queue_name: str = Field(alias="MODEL_CHANGE_QUEUE_NAME")
     booking_change_wait_seconds: int = Field(
         alias="BOOKING_CHANGE_WAIT_SECONDS")
     knn_model_change_wait_seconds: int = Field(
         alias="MODEL_CHANGE_WAIT_SECONDS")
-    bucket_name: str = Field(alias="BUCKET_NAME")
+
+    aws_s3_access_key: str = Field(alias="AWS_S3_ACCESS_KEY")
+    aws_s3_secret_access_key: str = Field(alias="AWS_S3_SECRET_KEY")
+    aws_s3_bucket_name: str = Field(alias="AWS_S3_BUCKET_NAME")
+    aws_s3_knn_model_key: str = Field(alias="AWS_S3_KNN_MODEL_KEY")
+    aws_s3_index_map_key: str = Field(alias="AWS_S3_INDEX_MAP_KEY")
 
 
 environment = os.getenv("APP_ENV")

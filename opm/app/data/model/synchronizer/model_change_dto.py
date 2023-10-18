@@ -15,7 +15,6 @@ class ModelChangeDTO(BaseModel):
             return model_change_dto
         except ValueError as e:
             logger.debug(f"Value error: {e}")
-            raise ResponseError.validation()
 
     @classmethod
     def from_dict(cls, dict: Dict):
@@ -24,4 +23,3 @@ class ModelChangeDTO(BaseModel):
             return model_change_dto
         except ValidationError as error:
             logger.info(f"Validation error: {error}")
-            raise ResponseError.validation()

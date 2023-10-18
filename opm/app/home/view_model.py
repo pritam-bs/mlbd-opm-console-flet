@@ -117,7 +117,8 @@ class HomeViewModel:
         self.model_synchronizer_usecase.stop()
 
     def _on_model_change(self, model_change_entity: ModelChangeEntity):
-        pass
+        self._model_downloader_task = asyncio.create_task(
+            self._download_model())
 
     async def _start_booking_synchronizer(self):
         await self.booking_synchronizer_usecase.start(
@@ -130,8 +131,8 @@ class HomeViewModel:
         pass
 
     def start_synchronizers(self):
-        self._booking_synchronizer_task = asyncio.create_task(
-            self._start_booking_synchronizer())
+        # self._booking_synchronizer_task = asyncio.create_task(
+        #     self._start_booking_synchronizer())
         self._model_synchronizer_task = asyncio.create_task(
             self._start_model_synchronizer())
 
@@ -145,12 +146,13 @@ class HomeViewModel:
 
         self._stop_model_synchronizer()
 
-    def _download_model(self):
-        self.model_downloader_usecase.download(
+    async def _download_model(self):
+        await self.model_downloader_usecase.download(
             callback=self._on_model_download)
 
-    def _on_model_download(self, model_name: str, is_successful: bool):
-        pass
+    def _on_model_download(self, is_successful: bool):
+        if is_successful:
+            self.face_recognition_usecase.reload_model()
 
     def change_loading_state(self, is_loading: bool):
         new_state = self.current_state.mutate(is_loading=is_loading)

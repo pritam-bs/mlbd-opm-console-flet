@@ -5,6 +5,7 @@ from botocore.exceptions import (
     PartialCredentialsError,
 
 )
+import aiofiles
 
 from asyncio import TimeoutError, sleep, gather
 from pathlib import Path
@@ -12,7 +13,7 @@ from ...settings.settings import settings
 from loguru import logger
 from typing import Callable
 
-CallbackFunc = Callable[[str, bool], None]
+CallbackFunc = Callable[[bool], None]
 
 
 class ModelDownloader:
@@ -20,27 +21,23 @@ class ModelDownloader:
     RETRY_DELAY = 5
 
     def __init__(self) -> None:
-        self.aws_access_key_id = settings.aws_access_key_id
-        self.aws_secret_access_key = settings.aws_secret_access_key
-        self.region_name = settings.region_name
+        self.aws_access_key = settings.aws_s3_access_key
+        self.aws_secret_key = settings.aws_s3_secret_access_key
+        self.region_name = settings.aws_sqs_region_name
 
     async def _download_file_from_s3(self, bucket_name: str, s3_key: str, local_path: str, callback: CallbackFunc):
         for attempt in range(self.MAX_RETRIES):
             try:
                 session = get_session()
-                async with session.create_client('s3') as s3:
-                    response = await s3.get_object(Bucket=bucket_name, Key=s3_key)
-                    async with response['Body'] as stream:
-                        with open(local_path, 'wb') as file:
-                            while True:
-                                # reading 1MB chunk
-                                chunk = await stream.read(1024*1024)
-                                if not chunk:
-                                    break
-                                file.write(chunk)
+                async with session.create_client('s3', region_name=self.region_name,
+                                                 aws_access_key_id=self.aws_access_key,
+                                                 aws_secret_access_key=self.aws_secret_key) as s3:
 
-                callback(s3_key, True)
-                return
+                    response = await s3.get_object(Bucket=bucket_name, Key=s3_key)
+                    async with aiofiles.open(local_path, 'wb') as file:
+                        async for chunk in response['Body'].iter_chunks():
+                            await file.write(chunk)
+                break
             except ClientError as e:
                 error_code = e.response['Error']['Code']
                 if error_code == 'NoSuchBucket':
@@ -82,17 +79,33 @@ class ModelDownloader:
 
     async def download_models(self, callback: CallbackFunc):
         local_model_dir = self._ensure_model_dir()
-        bucket_name = settings.bucket_name
-        knn_model_s3_key = settings.knn_model
-        index_map_s3_key = settings.index_map
-        knn_model_local_path = local_model_dir / knn_model_s3_key
-        index_map_local_path = local_model_dir / index_map_s3_key
+        bucket_name = settings.aws_s3_bucket_name
+        knn_model_s3_key = settings.aws_s3_knn_model_key
+        index_map_s3_key = settings.aws_s3_index_map_key
+        knn_model_local_path = local_model_dir / settings.local_knn_model
+        index_map_local_path = local_model_dir / settings.local_index_map
         files_to_download = {
             knn_model_s3_key: str(knn_model_local_path),
             index_map_s3_key: str(index_map_local_path)
         }
 
+        successful_downloads = []  # Keep track of successful downloads
+
+        async def download_and_track_success(s3_key, local_path):
+            nonlocal successful_downloads
+            try:
+                await self._download_file_from_s3(bucket_name, s3_key, local_path, callback)
+                successful_downloads.append(s3_key)
+            except Exception as e:
+                logger.debug(f"Failed to download {s3_key}: {str(e)}")
+
+        # Use asyncio.gather to concurrently download files and track successful ones
         await gather(
-            *[self._download_file_from_s3(bucket_name, s3_key, local_path, callback)
-              for s3_key, local_path in files_to_download.items()]
+            *[download_and_track_success(s3_key, local_path) for s3_key, local_path in files_to_download.items()]
         )
+
+        # Call the callback function only if all downloads were successful
+        if len(successful_downloads) == len(files_to_download):
+            callback(True)
+        else:
+            callback(False)
