@@ -3,26 +3,22 @@ from ....domain.services.booking.booking_repository import BookingRepository
 from ....data.services.booking.data_source.remote.booking_remore_datasource import BookingRemoteDatasource
 from ....data.model.error.response_error import ResponseError
 from ....domain.services.booking.booking_dto_remapper import BookingRemapper
-from typing import Union, List
+from typing import List
 from ....domain.error.app_error import AppException
-from functools import lru_cache
+from ....domain.services.booking_cache.booking_cache_repository import BookingCacheRepository
 
 
 class BookingRepositoryImpl(BookingRepository):
-    def __init__(self, booking_remote_datasource: BookingRemoteDatasource):
+    def __init__(self, booking_remote_datasource: BookingRemoteDatasource, booking_cache_repository: BookingCacheRepository):
         self.booking_remote_datasource = booking_remote_datasource
-        self._booking_entities: List[BookingEntity] = []
+        self.booking_cache_repository = booking_cache_repository
 
     async def get_all_bookings(self) -> List[BookingEntity]:
         try:
             response = await self.booking_remote_datasource.get_all_bookings()
             booking_entities = BookingRemapper.map_network_dto(
                 booking_dto=response)
-            self._booking_entities = booking_entities
+            self.booking_cache_repository.make_cache(bookings=booking_entities)
             return booking_entities
         except ResponseError as response_error:
             raise AppException.from_response_error(response_error)
-
-    @property
-    def get_cached_bookings(self) -> List[BookingEntity]:
-        return self._booking_entities

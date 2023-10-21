@@ -1,5 +1,5 @@
-from ...data.model.synchronizer.booking_change_dto import BookingChangeDTO
-from ...data.model.synchronizer.model_change_dto import ModelChangeDTO
+from ...data.model.synchronizer.booking_update_dto import BookingUpdateListDTO
+from ...data.model.synchronizer.model_update_dto import ModelUpdateDTO
 from ...settings.settings import settings
 from aiobotocore.session import get_session
 from aiobotocore.session import AioSession
@@ -7,10 +7,11 @@ import botocore.exceptions
 from typing import Callable, Dict, Optional
 from loguru import logger
 import json
+import asyncio
 
 # Define a type alias for the callable
-BookingChangeFunc = Callable[[Dict], None]
-ModelChangeFunc = Callable[[Dict], None]
+BookingUpdateFunc = Callable[[BookingUpdateListDTO], None]
+ModelUpdateFunc = Callable[[ModelUpdateDTO], None]
 
 
 class SqsClient:
@@ -21,46 +22,46 @@ class SqsClient:
         self.region_name = settings.aws_sqs_region_name
         self.model_change_queue_name = settings.knn_model_change_queue_name
         self.booking_change_queue_name = settings.booking_change_queue_name
-        self.model_wait_time_seconds = settings.knn_model_change_wait_seconds
-        self.booking_wait_time_seconds = settings.booking_change_wait_seconds
+        self.model_listen_interval = settings.knn_model_listen_interval
+        self.booking_listen_interval = settings.booking_listen_interval
 
-    async def start_booking_change_listener(
+    async def start_booking_update_listener(
         self,
-        on_booking_change: Optional[BookingChangeFunc]
+        on_booking_update: Optional[BookingUpdateFunc]
     ):
 
-        self.booking_change_listener = BookingChangeListener(
+        self.booking_update_listener = BookingUpdateListener(
+            on_booking_update=on_booking_update,
             queue_name=self.booking_change_queue_name,
-            on_booking_change=on_booking_change,
             aws_access_key=self.aws_access_key_id,
             aws_secret_key=self.aws_secret_access_key,
             region_name=self.region_name,
-            wait_time_seconds=self.booking_wait_time_seconds
+            interval=self.booking_listen_interval
         )
-        await self.booking_change_listener.listen()
+        await self.booking_update_listener.listen()
 
-    async def start_model_change_listener(
+    async def start_model_update_listener(
         self,
-        on_model_change: Optional[ModelChangeFunc]
+        on_model_update: Optional[ModelUpdateFunc]
     ):
-        self.model_change_listener = ModelChangeListener(
+        self.model_update_listener = ModelUpdateListener(
+            on_model_update=on_model_update,
             queue_name=self.model_change_queue_name,
-            on_model_change=on_model_change,
             aws_access_key=self.aws_access_key_id,
             aws_secret_key=self.aws_secret_access_key,
             region_name=self.region_name,
-            wait_time_seconds=self.model_wait_time_seconds
+            interval=self.model_listen_interval
         )
 
-        await self.model_change_listener.listen()
+        await self.model_update_listener.listen()
 
-    def stop_booking_change_listener(self):
-        self.booking_change_listener.stop_listening()
-        self.booking_change_listener = None
+    def stop_booking_update_listener(self):
+        self.booking_update_listener.stop_listening()
+        self.booking_update_listener = None
 
-    def stop_model_change_listener(self):
-        self.model_change_listener.stop_listening()
-        self.model_change_listener = None
+    def stop_model_update_listener(self):
+        self.model_update_listener.stop_listening()
+        self.model_update_listener = None
 
 
 class AsyncSqsListener:
@@ -70,13 +71,13 @@ class AsyncSqsListener:
             aws_access_key,
             aws_secret_key,
             region_name,
-            wait_time_seconds
+            interval
     ):
         self.queue_name = queue_name
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         self.region_name = region_name
-        self.wait_time_seconds = wait_time_seconds
+        self.interval = interval
         self.is_polling = False
 
     async def listen(self):
@@ -85,7 +86,7 @@ class AsyncSqsListener:
                                          aws_access_key_id=self.aws_access_key,
                                          aws_secret_access_key=self.aws_secret_key) as client:
             try:
-                response = await client.get_queue_url(QueueName=self.queue_name)
+                message_response = await client.get_queue_url(QueueName=self.queue_name)
             except botocore.exceptions.ClientError as err:
                 if (
                     err.response['Error']['Code'] == 'AWS.SimpleQueueService.NonExistentQueue'
@@ -95,24 +96,30 @@ class AsyncSqsListener:
                     logger.debug(err)
                 return
 
-            queue_url = response['QueueUrl']
+            queue_url = message_response['QueueUrl']
             self.is_polling = True
-            while self.is_polling:  # Continuous polling
-                response = await client.receive_message(
+            while self.is_polling:
+                message_response = await client.receive_message(
                     QueueUrl=queue_url,
-                    WaitTimeSeconds=self.wait_time_seconds)
-                messages = response.get('Messages', [])
+                    WaitTimeSeconds=10,
+                    MaxNumberOfMessages=10
+                )
+                messages = message_response.get('Messages', [])
+                message_bodies = []
                 for message in messages:
                     receipt_handle = message['ReceiptHandle']
                     message_body = message['Body']
-                    if self._is_valid_json(data_str=message_body):
-                        await self.handle_message(message_body)
                     try:
+                        data_dict = json.loads(message_body)
+                        message_bodies.append(data_dict)
                         await client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
                     except Exception as err:
                         logger.debug(err)
+                if len(message_bodies) > 0:
+                    await self.handle_messages(message_bodies)
+                await asyncio.sleep(self.interval)
 
-    async def handle_message(self, message):
+    async def handle_messages(self, messages):
         raise NotImplementedError
 
     def stop_listening(self):
@@ -126,23 +133,23 @@ class AsyncSqsListener:
             return False
 
 
-class ModelChangeListener(AsyncSqsListener):
-    def __init__(self, on_model_change: Optional[ModelChangeFunc], **kwargs):
+class ModelUpdateListener(AsyncSqsListener):
+    def __init__(self, on_model_update: Optional[ModelUpdateFunc], **kwargs):
         super().__init__(**kwargs)
-        self.on_model_change = on_model_change
+        self.on_model_update = on_model_update
 
-    async def handle_message(self, message):
-        if self.on_model_change:
-            model_change_dto = ModelChangeDTO.from_json(json_data=message)
-            self.on_model_change(model_change_dto)
+    async def handle_messages(self, messages):
+        if self.on_model_update:
+            model_change_dto = ModelUpdateDTO.from_dict(dict=messages)
+            self.on_model_update(model_change_dto)
 
 
-class BookingChangeListener(AsyncSqsListener):
-    def __init__(self, on_booking_change: Optional[BookingChangeFunc], **kwargs):
+class BookingUpdateListener(AsyncSqsListener):
+    def __init__(self, on_booking_update: Optional[BookingUpdateFunc], **kwargs):
         super().__init__(**kwargs)
-        self.on_booking_change = on_booking_change
+        self.on_booking_update = on_booking_update
 
-    async def handle_message(self, message):
-        if self.on_booking_change:
-            booking_change_dto = BookingChangeDTO.from_json(json_data=message)
-            self.on_booking_change(booking_change_dto)
+    async def handle_messages(self, messages):
+        if self.on_booking_update:
+            booking_change_dto = BookingUpdateListDTO.from_dict(dict=messages)
+            await self.on_booking_update(booking_change_dto)

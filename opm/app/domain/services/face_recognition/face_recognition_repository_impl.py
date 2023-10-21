@@ -12,12 +12,10 @@ import numpy as np
 class FaceRecognitionRepositoryImpl(FaceRecognitionRepository):
     def __init__(
         self,
-        face_recognition_datasource: FacaRecognitionDatasource,
-        booking_repository: BookingRepository
+        face_recognition_datasource: FacaRecognitionDatasource
     ) -> None:
         super().__init__()
         self._face_recognition_datasource = face_recognition_datasource
-        self._booking_repository = booking_repository
 
     def start(self, on_image_receive: ImageFunc, on_match: MatchFunc):
         self.on_image_receive = on_image_receive
@@ -49,13 +47,4 @@ class FaceRecognitionRepositoryImpl(FaceRecognitionRepository):
         return img_str
 
     async def _on_match(self, employee_id: str):
-        booking_list = self._booking_repository.get_cached_bookings
-        matched_employee = self.get_booking_by_employee_id(
-            bookings=booking_list, employee_id=employee_id)
-        await self.on_match(matched_employee)
-
-    def get_booking_by_employee_id(self, bookings: List[BookingEntity], employee_id: str) -> Union[BookingEntity, str]:
-        for booking in bookings:
-            if booking.employee_id == employee_id:
-                return booking
-        return employee_id
+        await self.on_match(employee_id)

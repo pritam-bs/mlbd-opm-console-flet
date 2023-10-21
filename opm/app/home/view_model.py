@@ -5,8 +5,8 @@ from ..domain.error.app_error import AppException
 from ..dependency_containers.application_container import application_container_provider
 from ..core.abstractions import State
 from ..domain.entities.booking_entity import BookingEntity
-from ..domain.entities.model_change_entity import ModelChangeEntity
-from ..domain.entities.booking_change_entity import BookingChangeEntity
+from ..domain.entities.model_update_entity import ModelUpdateEntity
+from ..domain.entities.booking_update_entity import BookingUpdateListEntity
 
 from typing import Dict, Optional, List, Union, Callable
 from loguru import logger
@@ -59,6 +59,7 @@ class HomeViewModel:
         self.booking_synchronizer_usecase = application_container.domain.container.booking_synchronizer_usecase()
         self.model_synchronizer_usecase = application_container.domain.container.model_sychronizer_usecase()
         self.model_downloader_usecase = application_container.domain.container.model_downloader_usecase()
+        self.booking_cache_usecase = application_container.domain.container.booking_cache_usecase()
 
     @property
     def current_state(self):
@@ -100,42 +101,59 @@ class HomeViewModel:
         if self._state_callback:
             await self._state_callback(state)
 
-    async def _on_match(self, booking_or_employee_id: Union[BookingEntity, str]):
-        # Check if booking_or_employee_id is of type BookingEntity
-        if isinstance(booking_or_employee_id, BookingEntity):
-            logger.debug("booking_or_employee_id is a BookingEntity instance")
-            logger.debug(
-                f"Booking for matched employee ID: {booking_or_employee_id}")
+    async def _on_match(self, employee_id: str):
+        booking = self._find_bookings(employee_id=employee_id)
+        logger.debug("Got a match")
 
-        # Check if booking_or_employee_id is of type str
-        elif isinstance(booking_or_employee_id, str):
-            logger.debug("booking_or_employee_id is a string")
-            logger.debug(f"Matched employee ID: {booking_or_employee_id}")
+    def _find_bookings(self, employee_id: str) -> Optional[BookingEntity]:
+        booking_map = self.booking_cache_usecase.get_cached_booking()
+        try:
+            booking = booking_map[employee_id]
+        except KeyError:
+            logger.debug(
+                f"No bookin for employee_id {employee_id} found in the list.")
+            booking = None
+
+        return booking
 
     async def _start_model_synchronizer(self):
         await self.model_synchronizer_usecase.start(
-            on_model_change=self._on_model_change)
+            on_model_update=self._on_model_update)
 
     def _stop_model_synchronizer(self):
         self.model_synchronizer_usecase.stop()
 
-    def _on_model_change(self, model_change_entity: ModelChangeEntity):
+    def _on_model_update(self, model_update_entity: ModelUpdateEntity):
+        self.model_update_entity = model_update_entity
         self._model_downloader_task = asyncio.create_task(
             self._download_model())
 
     async def _start_booking_synchronizer(self):
         await self.booking_synchronizer_usecase.start(
-            on_booking_change=self._on_booking_change)
+            on_booking_update=self._on_booking_update)
 
     def _stop_booking_synchronizer(self):
         self.booking_synchronizer_usecase.stop()
 
-    def _on_booking_change(self, booking_change_entity: BookingChangeEntity):
-        pass
+    async def _on_booking_update(self, booking_update_list_entity: BookingUpdateListEntity):
+        booking_update_list = booking_update_list_entity.booking_update_list
+        logger.debug(
+            f"Newly booking update count: {len(booking_update_list)}")
+        current_booking = self.booking_cache_usecase.get_cached_booking()
+        logger.debug(f"Current booking count: {len(current_booking)}")
+        self.booking_cache_usecase.update_cached_booking(
+            booking_updates=booking_update_list_entity)
+        updated_booking = self.booking_cache_usecase.get_cached_booking()
+        logger.debug(f"Updated booking count: {len(updated_booking)}")
+
+        booking_list = list(updated_booking.values())
+        state = self.current_state.mutate(booking_list=booking_list)
+        if self._state_callback:
+            await self._state_callback(state)
 
     def start_synchronizers(self):
-        # self._booking_synchronizer_task = asyncio.create_task(
-        #     self._start_booking_synchronizer())
+        self._booking_synchronizer_task = asyncio.create_task(
+            self._start_booking_synchronizer())
         self._model_synchronizer_task = asyncio.create_task(
             self._start_model_synchronizer())
 
@@ -156,6 +174,10 @@ class HomeViewModel:
     def _on_model_download(self, is_successful: bool):
         if is_successful:
             self.face_recognition_usecase.reload_model()
+            self.notify_onboarding_successful()
+
+    def notify_onboarding_successful(self):
+        employee_list = self.onboarded_employee_list
 
     def change_loading_state(self, is_loading: bool):
         new_state = self.current_state.mutate(is_loading=is_loading)

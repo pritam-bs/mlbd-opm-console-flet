@@ -4,7 +4,7 @@ from ....domain.entities.booking_entity import BookingEntity
 
 # Define a type alias for the callable
 ImageFunc = Callable[[Optional[str]], None]
-MatchFunc = Callable[[Union[BookingEntity, str]], None]
+MatchFunc = Callable[[str], None]
 
 
 class FaceRecognitionRepository(ABC):

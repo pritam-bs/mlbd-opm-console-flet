@@ -4,12 +4,10 @@ from ..domain.usecase.face_recognition_usecase import FaceRecognitionUsecase
 from ..domain.usecase.get_auth_usecase import GetAuthUsecase
 from ..domain.usecase.save_auth_usecase import SaveAuthUsecase
 from ..domain.services.auth.auth_repository_impl import AuthRepositoryImpl
-from ..domain.services.auth.auth_dto_remapper import AuthRemapper
 from ..domain.usecase.booking_usecase import BookingUsecase
-from ..domain.services.booking.booking_dto_remapper import BookingRemapper
 from ..domain.services.booking.booking_repository_impl import BookingRepositoryImpl
+from ..domain.services.booking_cache.booking_cache_repository_impl import BookingCacheRepositoryImpl
 from ..domain.services.auth.token_repository_impl import TokenRepositoryImpl
-from ..domain.services.auth.token_dto_remapper import TokenRemapper
 from ..domain.usecase.get_token_usecase import GetTokenUsecase
 from ..domain.services.face_recognition.face_recognition_repository_impl import FaceRecognitionRepositoryImpl
 from ..domain.services.synchronizer.booking_sqs_repository_impl import BookingSqsRepositoryImpl
@@ -18,6 +16,7 @@ from ..domain.services.model_downloader.model_downloader_repository_impl import 
 from ..domain.usecase.booking_synchronizer_usecase import BookingSynchronizerUsecase
 from ..domain.usecase.model_synchronizer_usecase import ModelSynchronizerUsecase
 from ..domain.usecase.model_downloader_usecase import ModelDownloaderUsecase
+from ..domain.usecase.booking_cache_usecase import BookingCacheUsecase
 
 
 class DomainContainer(containers.DeclarativeContainer):
@@ -48,10 +47,16 @@ class DomainContainer(containers.DeclarativeContainer):
         auth_local_datasource=auth_local_datasource_dependency,
     )
 
+    # Create a provider for BookingCacheRepositoryImpl.
+    booking_cache_repository_impl = providers.Singleton(
+        BookingCacheRepositoryImpl,
+    )
+
     # Create a provider for BookingRepositoryImpl. Dependencies will be injected from the DataContainer.
     booking_repository_impl = providers.Singleton(
         BookingRepositoryImpl,
         booking_remote_datasource=booking_remote_datasource_dependency,
+        booking_cache_repository=booking_cache_repository_impl,
     )
 
     # Create a provider for TokenRepositoryImpl. Dependencies will be injected from the DataContainer.
@@ -64,7 +69,6 @@ class DomainContainer(containers.DeclarativeContainer):
     face_recognition_repository_impl = providers.Singleton(
         FaceRecognitionRepositoryImpl,
         face_recognition_datasource=face_recognition_datasource_dependency,
-        booking_repository=booking_repository_impl
     )
 
     # Create a provider for BookingSqsRepositoryImpl. Dependencies will be injected from the DataContainer.
@@ -95,6 +99,12 @@ class DomainContainer(containers.DeclarativeContainer):
     save_auth_usecase = providers.Factory(
         SaveAuthUsecase,
         auth_repository=auth_repository_impl
+    )
+
+    # Create a provider for BookingCacheUsecase
+    booking_cache_usecase = providers.Factory(
+        BookingCacheUsecase,
+        booking_cache_repository=booking_cache_repository_impl
     )
 
     # Create a provider for BookingUsecase

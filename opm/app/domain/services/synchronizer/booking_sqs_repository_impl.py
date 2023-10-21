@@ -1,7 +1,7 @@
-from opm.app.data.model.synchronizer.booking_change_dto import BookingChangeDTO
-from ....domain.services.synchronizer.booking_sqs_repository import BookingChangeFunc, BookingSqsRepository
+from opm.app.data.model.synchronizer.booking_update_dto import BookingUpdateListDTO
+from ....domain.services.synchronizer.booking_sqs_repository import BookingUpdateFunc, BookingSqsRepository
 from ....data.services.synchronizer.datasource.remote.booking_sqs_remote_datasource import BookingSqsRemoteDatasource
-from ....domain.services.synchronizer.booking_change_dto_remapper import BookingChangeRemapper
+from .booking_update_dto_remapper import BookingUpdateRemapper
 
 
 class BookingSqsRepositoryImpl(BookingSqsRepository):
@@ -9,15 +9,15 @@ class BookingSqsRepositoryImpl(BookingSqsRepository):
         super().__init__()
         self.booking_sqs_remote_datasource = booking_sqs_remote_datasource
 
-    async def start(self, on_booking_change: BookingChangeFunc):
-        self.on_booking_change = on_booking_change
+    async def start(self, on_booking_update: BookingUpdateFunc):
+        self.on_booking_update = on_booking_update
         await self.booking_sqs_remote_datasource.start(
-            on_booking_change=self.booking_change_callback)
+            on_booking_update=self.booking_update_callback)
 
     def stop(self):
         self.booking_sqs_remote_datasource.stop()
 
-    def booking_change_callback(self, booking_chnage_dto: BookingChangeDTO):
-        booking_chnage_entity = BookingChangeRemapper.map_from(
-            booking_change_dto=booking_chnage_dto)
-        self.on_booking_change(booking_chnage_entity)
+    async def booking_update_callback(self, booking_update_list_dto: BookingUpdateListDTO):
+        booking_update_entity = BookingUpdateRemapper.map_sqs_dto(
+            booking_update_list_dto=booking_update_list_dto)
+        await self.on_booking_update(booking_update_entity)

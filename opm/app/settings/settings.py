@@ -20,10 +20,10 @@ class Settings(BaseSettings):
     aws_sqs_region_name: str = Field(alias="AWS_SQS_REGION_NAME")
     booking_change_queue_name: str = Field(alias="BOOKING_CHANGE_QUEUE_NAME")
     knn_model_change_queue_name: str = Field(alias="MODEL_CHANGE_QUEUE_NAME")
-    booking_change_wait_seconds: int = Field(
-        alias="BOOKING_CHANGE_WAIT_SECONDS")
-    knn_model_change_wait_seconds: int = Field(
-        alias="MODEL_CHANGE_WAIT_SECONDS")
+    booking_listen_interval: int = Field(
+        alias="BOOKING_LISTEN_INTERVAL")
+    knn_model_listen_interval: int = Field(
+        alias="MODEL_LISTEN_INTERVAL")
 
     aws_s3_access_key: str = Field(alias="AWS_S3_ACCESS_KEY")
     aws_s3_secret_access_key: str = Field(alias="AWS_S3_SECRET_KEY")

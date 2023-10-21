@@ -8,6 +8,7 @@ from ...data.face_recognition.knn_search.knn_search import KnnSearch
 from ...data.face_recognition.fas.fas_detector import FasDetector
 from ...data.face_recognition.face_detector.cascade_face_detector import CascadeDetector
 from ...data.face_recognition.image_capture.capture_image import CaptureImage
+from ...data.utils.repetitive_timer import RepetitiveTimer
 from loguru import logger
 
 # Define a type alias for the callable
@@ -91,26 +92,3 @@ class FaceRecognizer:
             embeddings = self._arc_face_generator.get_feature_vectors(
                 face_image_list)
         return embeddings
-
-
-class RepetitiveTimer:
-    def __init__(self, interval, task_func):
-        self.interval = interval
-        self._task = None
-        self._stop_signal = False
-        self._task_func = task_func
-
-    async def _repetitive_task(self):
-        while not self._stop_signal:
-            await self._task_func()
-            await asyncio.sleep(self.interval)
-
-    def start_timer(self):
-        if self._task is None:
-            self._stop_signal = False
-            self._task = asyncio.create_task(self._repetitive_task())
-
-    def stop_timer(self):
-        if self._task:
-            self._stop_signal = True
-            self._task = None

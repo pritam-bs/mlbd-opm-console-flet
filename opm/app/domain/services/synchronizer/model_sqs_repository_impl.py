@@ -1,7 +1,7 @@
-from opm.app.data.model.synchronizer.model_change_dto import ModelChangeDTO
-from ....domain.services.synchronizer.model_sqs_repository import ModelChangeFunc, ModelSqsRepository
+from opm.app.data.model.synchronizer.model_update_dto import ModelUpdateDTO
+from ....domain.services.synchronizer.model_sqs_repository import ModelUpdateFunc, ModelSqsRepository
 from ....data.services.synchronizer.datasource.remote.model_sqs_remote_datasource import ModelSqsRemoteDatasource
-from ....domain.services.synchronizer.model_change_dto_remapper import ModelChangeRemapper
+from .model_update_dto_remapper import ModelUpdateRemapper
 
 
 class ModelSqsRepositoryImpl(ModelSqsRepository):
@@ -9,15 +9,15 @@ class ModelSqsRepositoryImpl(ModelSqsRepository):
         super().__init__()
         self.model_sqs_remote_datasource = model_sqs_remote_datasource
 
-    async def start(self, on_model_change: ModelChangeFunc):
-        self.on_model_change = on_model_change
+    async def start(self, on_model_update: ModelUpdateFunc):
+        self.on_model_update = on_model_update
         await self.model_sqs_remote_datasource.start(
-            on_model_change=self.model_change_callback)
+            on_model_update=self.model_update_callback)
 
     def stop(self):
         self.model_sqs_remote_datasource.stop()
 
-    def model_change_callback(self, model_change_dto: ModelChangeDTO):
-        model_change_entity = ModelChangeRemapper.map_from(
-            model_change_dto=model_change_dto)
-        self.on_model_change(model_change_entity)
+    def model_update_callback(self, model_update_dto: ModelUpdateDTO):
+        model_update_entity = ModelUpdateRemapper.map_sqs_dto(
+            model_update_dto=model_update_dto)
+        self.on_model_update(model_update_entity)

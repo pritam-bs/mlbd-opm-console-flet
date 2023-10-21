@@ -25,7 +25,7 @@ class ModelDownloader:
         self.aws_secret_key = settings.aws_s3_secret_access_key
         self.region_name = settings.aws_sqs_region_name
 
-    async def _download_file_from_s3(self, bucket_name: str, s3_key: str, local_path: str, callback: CallbackFunc):
+    async def _download_file_from_s3(self, bucket_name: str, s3_key: str, local_path: str):
         for attempt in range(self.MAX_RETRIES):
             try:
                 session = get_session()
@@ -37,7 +37,7 @@ class ModelDownloader:
                     async with aiofiles.open(local_path, 'wb') as file:
                         async for chunk in response['Body'].iter_chunks():
                             await file.write(chunk)
-                break
+                return True
             except ClientError as e:
                 error_code = e.response['Error']['Code']
                 if error_code == 'NoSuchBucket':
@@ -51,13 +51,17 @@ class ModelDownloader:
                     logger.debug("Access denied for the given bucket/key.")
                 else:
                     logger.debug(f"An S3 error occurred: {e}")
+                return False
             except NoCredentialsError:
                 logger.debug("No credentials could be found.")
+                return False
             except PartialCredentialsError:
                 logger.debug("Incomplete or partial credentials provided.")
+                return False
             except IOError:
                 logger.debug(
                     f"Failed to write the file to {local_path}. Check if disk is full or check permissions.")
+                return False
             except TimeoutError:
                 logger.debug(f"Timed out while trying to download {s3_key}.")
                 if attempt < self.MAX_RETRIES - 1:  # i.e. not on the last attempt
@@ -67,9 +71,10 @@ class ModelDownloader:
                 else:
                     logger.debug(
                         f"Failed to download {s3_key} after {self.MAX_RETRIES} attempts. Last error: {str(e)}")
-                    callback(s3_key, False)
+                    return False
             except Exception as e:
                 logger.debug(f"An unexpected error occurred: {str(e)}")
+                return False
 
     def _ensure_model_dir(self) -> Path:
         model_dir = Path.home() / settings.app_directory / settings.knn_directory
@@ -94,8 +99,9 @@ class ModelDownloader:
         async def download_and_track_success(s3_key, local_path):
             nonlocal successful_downloads
             try:
-                await self._download_file_from_s3(bucket_name, s3_key, local_path, callback)
-                successful_downloads.append(s3_key)
+                is_success = await self._download_file_from_s3(bucket_name, s3_key, local_path)
+                if is_success:
+                    successful_downloads.append(s3_key)
             except Exception as e:
                 logger.debug(f"Failed to download {s3_key}: {str(e)}")
 
