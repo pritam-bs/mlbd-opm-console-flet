@@ -15,3 +15,4 @@ scikit-learn
 pySqsListener
 aiobotocore
 aiofiles
+schedule

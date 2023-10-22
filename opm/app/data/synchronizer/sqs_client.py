@@ -80,6 +80,10 @@ class AsyncSqsListener:
         self.interval = interval
         self.is_polling = False
 
+    def __del__(self):
+        logger.debug("AsyncSqsListener del")
+        self.is_polling = False
+
     async def listen(self):
         session = get_session()
         async with session.create_client('sqs', region_name=self.region_name,

@@ -60,6 +60,7 @@ class HomeViewModel:
         self.model_synchronizer_usecase = application_container.domain.container.model_sychronizer_usecase()
         self.model_downloader_usecase = application_container.domain.container.model_downloader_usecase()
         self.booking_cache_usecase = application_container.domain.container.booking_cache_usecase()
+        self.booking_update_scheduler_usecase = application_container.domain.container.booking_update_scheduler_usecase()
 
     @property
     def current_state(self):
@@ -166,6 +167,18 @@ class HomeViewModel:
             self._model_synchronizer_task = None
 
         self._stop_model_synchronizer()
+
+    def start_booking_update_scheduler(self):
+        self.booking_update_scheduler_usecase.start(
+            on_scheduled_booking_update=self.on_scheduled_booking_update)
+
+    def stop_booking_update_scheduler(self):
+        self.booking_update_scheduler_usecase.stop()
+
+    async def on_scheduled_booking_update(self, booking_list: List[BookingEntity]):
+        state = self.current_state.mutate(booking_list=booking_list)
+        if self._state_callback:
+            await self._state_callback(state)
 
     async def _download_model(self):
         await self.model_downloader_usecase.download(

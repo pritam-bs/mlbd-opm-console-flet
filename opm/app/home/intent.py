@@ -45,3 +45,9 @@ class HomeIntent:
 
     def stop_model_synchronizer(self):
         self._view_model.stop_synchronizers()
+
+    def start_booking_update_scheduler(self):
+        self._view_model.start_booking_update_scheduler()
+
+    def stop_booking_update_scheduler(self):
+        self._view_model.stop_booking_update_scheduler()

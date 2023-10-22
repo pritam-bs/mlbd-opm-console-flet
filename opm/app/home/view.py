@@ -56,6 +56,7 @@ class HomeScreen(BaseView):
         self.intent.bind(view=self)
         self.intent.start_face_recognition()
         self.intent.start_synchronizer()
+        self.intent.start_booking_update_scheduler()
         logger.info("Home view did mount")
 
     async def will_unmount_async(self):
@@ -63,6 +64,7 @@ class HomeScreen(BaseView):
         self.mounted = False
         self.intent.stop_face_recognition()
         self.intent.stop_model_synchronizer()
+        self.intent.stop_booking_update_scheduler()
         logger.debug("Home view did unmount")
 
     def build(self):

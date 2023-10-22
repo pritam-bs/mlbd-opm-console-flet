@@ -13,10 +13,12 @@ from ..domain.services.face_recognition.face_recognition_repository_impl import 
 from ..domain.services.synchronizer.booking_sqs_repository_impl import BookingSqsRepositoryImpl
 from ..domain.services.synchronizer.model_sqs_repository_impl import ModelSqsRepositoryImpl
 from ..domain.services.model_downloader.model_downloader_repository_impl import ModelDownloaderRepositoryImpl
+from ..domain.services.scheduler.booking_update_scheduler_repository_impl import BookingUpdateSchedulerRepositoryImpl
 from ..domain.usecase.booking_synchronizer_usecase import BookingSynchronizerUsecase
 from ..domain.usecase.model_synchronizer_usecase import ModelSynchronizerUsecase
 from ..domain.usecase.model_downloader_usecase import ModelDownloaderUsecase
 from ..domain.usecase.booking_cache_usecase import BookingCacheUsecase
+from ..domain.usecase.booking_update_scheduler_usecase import BookingUpdateSchedulerUsecase
 
 
 class DomainContainer(containers.DeclarativeContainer):
@@ -89,6 +91,12 @@ class DomainContainer(containers.DeclarativeContainer):
         model_downloader_remote_datasource=model_downloader_remote_datasource_dependency,
     )
 
+    # Create a provider for BookingUpdateSchedulerRepositoryImpl.
+    booking_update_scheduler_repository_impl = providers.Singleton(
+        BookingUpdateSchedulerRepositoryImpl,
+        booking_repository=booking_repository_impl,
+    )
+
     # Create a provider for GetAuthUsecase
     get_auth_usecase = providers.Factory(
         GetAuthUsecase,
@@ -142,4 +150,10 @@ class DomainContainer(containers.DeclarativeContainer):
     model_downloader_usecase = providers.Factory(
         ModelDownloaderUsecase,
         model_downloader_repository=model_downloader_repository_impl
+    )
+
+    # Create a provider for BookingUpdateSchedulerUsecase
+    booking_update_scheduler_usecase = providers.Factory(
+        BookingUpdateSchedulerUsecase,
+        booking_update_scheduler_repository=booking_update_scheduler_repository_impl
     )

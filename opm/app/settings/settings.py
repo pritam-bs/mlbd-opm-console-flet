@@ -30,6 +30,14 @@ class Settings(BaseSettings):
     aws_s3_bucket_name: str = Field(alias="AWS_S3_BUCKET_NAME")
     aws_s3_knn_model_key: str = Field(alias="AWS_S3_KNN_MODEL_KEY")
     aws_s3_index_map_key: str = Field(alias="AWS_S3_INDEX_MAP_KEY")
+    morning_booking_update_schedule: str = Field(
+        alias="MORNING_BOOKING_UPDATE_SCHEDULE")
+    midday_booking_update_schedule: str = Field(
+        alias="MIDDAY_BOOKING_UPDATE_SCHEDULE")
+    midnight_booking_update_schedule: str = Field(
+        alias="MIDNIGHT_BOOKING_UPDATE_SCHEDULE")
+    booking_update_check_interval: int = Field(
+        alias="BOOKING_UPDATE_CHECK_INTERVAL")
 
 
 environment = os.getenv("APP_ENV")
