@@ -28,8 +28,10 @@ class BookingUpdateSchedulerRepositoryImpl(BookingUpdateSchedulerRepository):
     def stop(self):
         self._stop_signal = True
         schedule.clear()
-        self._timer_task.cancel()
-        self._get_booking_task.cancel()
+        if self._timer_task is not None:
+            self._timer_task.cancel()
+        if self._get_booking_task is not None:
+            self._get_booking_task.cancel()
 
     def _run_job(self):
         self._get_booking_task = asyncio.create_task(self._get_bookings())

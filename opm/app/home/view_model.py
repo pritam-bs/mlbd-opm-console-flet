@@ -62,6 +62,10 @@ class HomeViewModel:
         self.booking_cache_usecase = application_container.domain.container.booking_cache_usecase()
         self.booking_update_scheduler_usecase = application_container.domain.container.booking_update_scheduler_usecase()
 
+    def __del__(self):
+        self.stop_face_recognition()
+        self.stop_synchronizers()
+
     @property
     def current_state(self):
         return self.state_driver.value
@@ -125,7 +129,7 @@ class HomeViewModel:
         self.model_synchronizer_usecase.stop()
 
     def _on_model_update(self, model_update_entity: ModelUpdateEntity):
-        self.model_update_entity = model_update_entity
+        self.onboarded_employee_list = model_update_entity.new_employee_list
         self._model_downloader_task = asyncio.create_task(
             self._download_model())
 
@@ -161,12 +165,15 @@ class HomeViewModel:
     def stop_synchronizers(self):
         if self._booking_synchronizer_task is not None:
             self._stop_booking_synchronizer()
+            self._booking_synchronizer_task.cancel()
             self._booking_synchronizer_task = None
         if self._model_synchronizer_task is not None:
             self._stop_model_synchronizer()
+            self._model_synchronizer_task.cancel()
             self._model_synchronizer_task = None
-
-        self._stop_model_synchronizer()
+        if self._model_downloader_task is not None:
+            self._model_downloader_task.cancel()
+            self._model_downloader_task = None
 
     def start_booking_update_scheduler(self):
         self.booking_update_scheduler_usecase.start(

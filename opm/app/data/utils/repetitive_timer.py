@@ -23,4 +23,4 @@ class RepetitiveTimer:
     def stop_timer(self):
         if self._task:
             self._stop_signal = True
-            self._task = None
+            self._task.cancel()
