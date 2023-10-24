@@ -1,6 +1,6 @@
 from typing import List
 from pydantic import BaseModel
-from ...meal.meal_type import MealType
+from .....data.model.meal.meal_type import MealType
 
 
 class ConsumeMealBody(BaseModel):

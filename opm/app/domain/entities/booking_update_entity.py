@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import List
-from ...domain.entities.meal_type import MealType
+from ...domain.entities.meal_entity_type import MealEntityType
 
 
 class BookingUpdateActionEntity(str, Enum):
@@ -14,8 +14,8 @@ class BookingUpdateInfoEntity:
     name: str
     email: str
     employee_id: str
-    booked_meals: List[MealType]
-    consumed_meals: List[MealType]
+    booked_meals: List[MealEntityType]
+    consumed_meals: List[MealEntityType]
     is_emergency: bool
 
 

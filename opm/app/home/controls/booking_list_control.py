@@ -23,7 +23,7 @@ from enum import Enum
 from ...home.intent import HomeIntent
 from ...home.controls.booking_list_item_control import BookingListItemControl
 from ...core.views import SecondaryButton, BodyText
-from ...domain.entities.booking_entity import BookingEntity, MealType
+from ...domain.entities.booking_entity import BookingEntity, MealEntityType
 from ...home.view_model import HomeState
 from ...core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
 
@@ -44,13 +44,13 @@ class BookingListControl(UserControl):
     @property
     def total_booked_breakfast(self) -> int:
         total_booked_breakfast_count = len(
-            [booking for booking in self._booking_list if booking.booked_meals and MealType.BREAKFAST in booking.booked_meals])
+            [booking for booking in self._booking_list if booking.booked_meals and MealEntityType.BREAKFAST in booking.booked_meals])
         return total_booked_breakfast_count
 
     @property
     def total_booked_lunch(self) -> int:
         total_booked_lunch_count = len(
-            [booking for booking in self._booking_list if booking.booked_meals and MealType.LUNCH in booking.booked_meals])
+            [booking for booking in self._booking_list if booking.booked_meals and MealEntityType.LUNCH in booking.booked_meals])
         return total_booked_lunch_count
 
     @property

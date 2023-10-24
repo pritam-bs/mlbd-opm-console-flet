@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class MealType(Enum):
+class MealEntityType(Enum):
     BREAKFAST = "Breakfast"
     LUNCH = "Lunch"
     SNACKS = "Snacks"

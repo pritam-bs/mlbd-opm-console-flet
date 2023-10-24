@@ -49,8 +49,8 @@ class HomeIntent:
     def stop_booking_update_scheduler(self):
         self._view_model.stop_booking_update_scheduler()
 
-    def consume_breakfast(self):
-        self._view_model.consume_breakfast()
+    async def consume_breakfast(self):
+        await self._view_model.consume_breakfast()
 
-    def consume_lunch(self):
-        self._view_model.consume_lunch()
+    async def consume_lunch(self):
+        await self._view_model.consume_lunch()

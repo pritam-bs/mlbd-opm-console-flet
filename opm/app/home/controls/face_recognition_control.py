@@ -27,7 +27,7 @@ from ...home.intent import HomeIntent
 from ...home.view_model import HomeState
 from ...core.views import Heading, HeadingWithSubheading, FilledButton
 from ...core.res.image_paths import camera_img_path
-from ...domain.entities.booking_entity import BookingEntity, MealType
+from ...domain.entities.booking_entity import BookingEntity, MealEntityType
 from typing import Optional, Tuple
 from ...core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
 from loguru import logger
@@ -151,12 +151,12 @@ class FaceRecognitionControl(UserControl):
 
         booked_meals = [] if booking.booked_meals is None else booking.booked_meals
         for booked_meal in booked_meals:
-            if booked_meal == MealType.BREAKFAST:
+            if booked_meal == MealEntityType.BREAKFAST:
                 is_breakfast_disabled = booking.is_consumed(
-                    meal=MealType.BREAKFAST)
-            elif booked_meal == MealType.LUNCH:
+                    meal=MealEntityType.BREAKFAST)
+            elif booked_meal == MealEntityType.LUNCH:
                 is_lunch_disabled = booking.is_consumed(
-                    meal=MealType.LUNCH)
+                    meal=MealEntityType.LUNCH)
 
         return Card(
             content=Container(
@@ -196,11 +196,11 @@ class FaceRecognitionControl(UserControl):
             )
         )
 
-    def _breakfast_button_on_click(self, e):
-        self.intent.consume_breakfast()
+    async def _breakfast_button_on_click(self, e):
+        await self.intent.consume_breakfast()
 
-    def _lunch_button_on_click(self, e):
-        self.intent.consume_lunch()
+    async def _lunch_button_on_click(self, e):
+        await self.intent.consume_lunch()
 
     async def update_control(self, state: HomeState, prev_state: Optional[HomeState]):
         if self.is_mounted == False:

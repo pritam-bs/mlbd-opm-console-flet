@@ -7,7 +7,7 @@ from ..core.abstractions import State
 from ..domain.entities.booking_entity import BookingEntity
 from ..domain.entities.model_update_entity import ModelUpdateEntity
 from ..domain.entities.booking_update_entity import BookingUpdateListEntity
-from ..domain.entities.meal_type import MealType
+from ..domain.entities.meal_entity_type import MealEntityType
 
 from typing import Dict, Optional, List, Callable
 from loguru import logger
@@ -241,13 +241,15 @@ class HomeViewModel:
     def notify_onboarding_successful(self):
         employee_list = self.onboarded_employee_list
 
-    def consume_breakfast(self):
-        self.consume_meal_usecase.run(
-            employee_id="", meals=[MealType.BREAKFAST.value])
+    async def consume_breakfast(self):
+        employee_id = self.current_state.booking_for_employee.employee_id
+        await self.consume_meal_usecase.run(
+            employee_id=employee_id, meals=[MealEntityType.BREAKFAST])
 
-    def consume_lunch(self):
-        self.consume_meal_usecase.run(
-            employee_id="", meals=[MealType.LUNCH.value])
+    async def consume_lunch(self):
+        employee_id = self.current_state.booking_for_employee.employee_id
+        await self.consume_meal_usecase.run(
+            employee_id=employee_id, meals=[MealEntityType.LUNCH])
 
     def change_loading_state(self, is_loading: bool):
         new_state = self.current_state.mutate(is_loading=is_loading)
