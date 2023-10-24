@@ -1,17 +1,12 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import List
+from ...domain.entities.meal_type import MealType
 
 
 class BookingUpdateActionEntity(str, Enum):
     update = "UPDATE"
     delete = "DELETE"
-
-
-class MealType(Enum):
-    BREAKFAST = "BREAKFAST"
-    LUNCH = "LUNCH"
-    SNACKS = "SNACKS"
 
 
 @dataclass

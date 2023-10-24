@@ -4,17 +4,12 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from loguru import logger
 from typing import List
 from pydantic import BaseModel
+from ....data.model.meal.meal_type import MealType
 
 
 class BookingUpdateActionDTO(str, Enum):
     update = "UPDATE"
     delete = "DELETE"
-
-
-class MealType(str, Enum):
-    breakfast = "BREAKFAST"
-    lunch = "LUNCH"
-    snacks = "SNACKS"
 
 
 class BookingUpdateInfoDTO(BaseModel):

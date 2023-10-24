@@ -2,6 +2,7 @@ from typing import Dict, List
 from ....domain.entities.booking_entity import BookingEntity
 from ....domain.entities.booking_update_entity import BookingUpdateListEntity, BookingUpdateActionEntity
 from ....domain.services.booking_cache.booking_cache_repository import BookingCacheRepository
+from ....domain.entities.meal_type import MealType
 from loguru import logger
 
 
@@ -33,8 +34,10 @@ class BookingCacheRepositoryImpl(BookingCacheRepository):
                     email=booking_update_info.email,
                     employee_id=booking_update_info.employee_id,
                     is_emergency=booking_update_info.is_emergency,
-                    booked_meals=booking_update_info.booked_meals,
-                    consumed_meals=booking_update_info.consumed_meals
+                    booked_meals=[MealType[meal.name]
+                                  for meal in booking_update_info.booked_meals] if booking_update_info.booked_meals is not None else [],
+                    consumed_meals=[MealType[meal.name]
+                                    for meal in booking_update_info.consumed_meals] if booking_update_info.consumed_meals is not None else [],
                 )
                 self.bookings_map[employee_id] = booking_entity
                 logger.debug(f"Booking cache updated")

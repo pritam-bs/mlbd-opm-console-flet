@@ -8,7 +8,7 @@ class BookingRemoteDatasource:
 
     async def get_all_bookings(self) -> BookingDTO:
         response = await self.api_client.path(
-            '/booking'
+            '/booking-data/today'
         ).get().request()
         booking_dto = BookingDTO.from_dict(response)
         return booking_dto

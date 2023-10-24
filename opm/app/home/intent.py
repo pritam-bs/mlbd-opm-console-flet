@@ -1,8 +1,5 @@
-from typing import List
-
 from ..core.abstractions import BaseView
 from ..home.view_model import HomeState, HomeViewModel
-from rx.disposable import Disposable
 
 
 class HomeIntent:
@@ -51,3 +48,9 @@ class HomeIntent:
 
     def stop_booking_update_scheduler(self):
         self._view_model.stop_booking_update_scheduler()
+
+    def consume_breakfast(self):
+        self._view_model.consume_breakfast()
+
+    def consume_lunch(self):
+        self._view_model.consume_lunch()

@@ -9,6 +9,8 @@ from ..data.services.synchronizer.datasource.remote.booking_sqs_remote_datasourc
 from ..data.services.synchronizer.datasource.remote.model_sqs_remote_datasource import ModelSqsRemoteDatasource
 from ..data.model_downloader.model_downloader import ModelDownloader
 from ..data.services.model_downloader.datasource.remote.model_downloader_remote_datasource import ModelDownloaderRemoteDatasource
+from ..data.services.meal.consume_meal_service import ConsumeMealService
+from ..data.services.employee_onboard_notify.employee_onboard_notify_service import EmployeeOnboardNotifyService
 
 
 class RemoteDataContainer(containers.DeclarativeContainer):
@@ -55,4 +57,16 @@ class RemoteDataContainer(containers.DeclarativeContainer):
     model_downloader_remote_datasource = providers.Singleton(
         ModelDownloaderRemoteDatasource,
         model_downloader=model_downloader
+    )
+
+    # Create a provider for ConsumeMealService
+    comsume_meal_service = providers.Singleton(
+        ConsumeMealService,
+        api_client=api_client
+    )
+
+    # Create a provider for EmployeeOnboardNotifyService
+    employee_onboard_notify_service = providers.Singleton(
+        EmployeeOnboardNotifyService,
+        api_client=api_client
     )

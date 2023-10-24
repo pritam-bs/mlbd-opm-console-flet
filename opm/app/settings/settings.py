@@ -38,6 +38,7 @@ class Settings(BaseSettings):
         alias="MIDNIGHT_BOOKING_UPDATE_SCHEDULE")
     booking_update_check_interval: int = Field(
         alias="BOOKING_UPDATE_CHECK_INTERVAL")
+    meal_select_action_timeout: int = Field(alias="MEAL_SELECT_ACTION_TIMEOUT")
 
 
 environment = os.getenv("APP_ENV")

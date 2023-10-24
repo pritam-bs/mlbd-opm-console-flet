@@ -42,13 +42,11 @@ class HomeScreen(BaseView):
         self.page_width = DEFAULT_WINDOW_WIDTH
 
     async def update_control(self, state: HomeState, prev_state: Optional[HomeState]):
-        await super().update_control(state, prev_state)
-        compared_state = HomeState.compare(prev_state, state)
-
         await self._face_recognition_control.update_control(
             state=state, prev_state=prev_state)
         await self._booking_list_control.update_control(
             state=state, prev_state=prev_state)
+        await super().update_control(state, prev_state)
 
     async def did_mount_async(self):
         await super().did_mount_async()

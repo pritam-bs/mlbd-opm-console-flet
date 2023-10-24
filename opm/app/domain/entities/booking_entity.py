@@ -2,12 +2,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import List, Optional
 from loguru import logger
-
-
-class MealType(Enum):
-    BREAKFAST = "Breakfast"
-    LUNCH = "Lunch"
-    SNACKS = "Snacks"
+from ...domain.entities.meal_type import MealType
 
 
 @dataclass

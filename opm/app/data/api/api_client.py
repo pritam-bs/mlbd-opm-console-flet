@@ -79,6 +79,10 @@ class APIClient:
         self._method = hdrs.METH_POST
         return self
 
+    def put(self):
+        self._method = hdrs.METH_PUT
+        return self
+
     def path(self, path):
         self._path = path
         return self

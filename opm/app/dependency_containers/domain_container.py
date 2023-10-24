@@ -14,11 +14,15 @@ from ..domain.services.synchronizer.booking_sqs_repository_impl import BookingSq
 from ..domain.services.synchronizer.model_sqs_repository_impl import ModelSqsRepositoryImpl
 from ..domain.services.model_downloader.model_downloader_repository_impl import ModelDownloaderRepositoryImpl
 from ..domain.services.scheduler.booking_update_scheduler_repository_impl import BookingUpdateSchedulerRepositoryImpl
+from ..domain.services.meal.consume_meal_repository_impl import ConsumeMealRepositoryImpl
+from ..domain.services.employee_onboard_notify.employee_onboard_notify_repository_impl import EmployeeOnboardNotifyRepositoryImpl
 from ..domain.usecase.booking_synchronizer_usecase import BookingSynchronizerUsecase
 from ..domain.usecase.model_synchronizer_usecase import ModelSynchronizerUsecase
 from ..domain.usecase.model_downloader_usecase import ModelDownloaderUsecase
 from ..domain.usecase.booking_cache_usecase import BookingCacheUsecase
 from ..domain.usecase.booking_update_scheduler_usecase import BookingUpdateSchedulerUsecase
+from ..domain.usecase.consume_meal_usecase import ConsumeMealUsecase
+from ..domain.usecase.employee_onboard_notify_usecase import EmployeeOnboardNotifyUsecase
 
 
 class DomainContainer(containers.DeclarativeContainer):
@@ -42,6 +46,12 @@ class DomainContainer(containers.DeclarativeContainer):
 
     # Crate a dependency provider since it depends on data_container
     face_recognition_datasource_dependency = providers.Dependency()
+
+    # Crate a dependency provider since it depends on data_container
+    consume_meal_service_dependency = providers.Dependency()
+
+    # Crate a dependency provider since it depends on data_container
+    employee_onboard_notify_service_dependency = providers.Dependency()
 
     # Create a provider for AuthRepositoryImpl. Dependencies will be injected from the DataContainer.
     auth_repository_impl = providers.Singleton(
@@ -95,6 +105,18 @@ class DomainContainer(containers.DeclarativeContainer):
     booking_update_scheduler_repository_impl = providers.Singleton(
         BookingUpdateSchedulerRepositoryImpl,
         booking_repository=booking_repository_impl,
+    )
+
+    # Create a provider for ConsumeMealRepositoryImpl.
+    consume_meal_repository_impl = providers.Singleton(
+        ConsumeMealRepositoryImpl,
+        consume_meal_service=consume_meal_service_dependency,
+    )
+
+    # Create a provider for EmployeeOnboardNotifyRepositoryImpl.
+    employee_onboard_notify_repository_impl = providers.Singleton(
+        EmployeeOnboardNotifyRepositoryImpl,
+        employee_onboard_notify_service=employee_onboard_notify_service_dependency,
     )
 
     # Create a provider for GetAuthUsecase
@@ -156,4 +178,16 @@ class DomainContainer(containers.DeclarativeContainer):
     booking_update_scheduler_usecase = providers.Factory(
         BookingUpdateSchedulerUsecase,
         booking_update_scheduler_repository=booking_update_scheduler_repository_impl
+    )
+
+    # Create a provider for ConsumeMealUsecase
+    consume_meal_usecase = providers.Factory(
+        ConsumeMealUsecase,
+        consume_meal_repository=consume_meal_repository_impl
+    )
+
+    # Create a provider for EmployeeOnboardNotifyUsecase
+    employee_onboard_notify_usecase = providers.Factory(
+        EmployeeOnboardNotifyUsecase,
+        employee_onboard_notify_repository=employee_onboard_notify_repository_impl
     )

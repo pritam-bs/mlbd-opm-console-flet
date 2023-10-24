@@ -7,11 +7,17 @@ from ..core.abstractions import State
 from ..domain.entities.booking_entity import BookingEntity
 from ..domain.entities.model_update_entity import ModelUpdateEntity
 from ..domain.entities.booking_update_entity import BookingUpdateListEntity
+from ..domain.entities.meal_type import MealType
 
-from typing import Dict, Optional, List, Union, Callable
+from typing import Dict, Optional, List, Callable
 from loguru import logger
 from ..core.state_driver import StateDriver
 import asyncio
+from collections import namedtuple
+from ..settings.settings import settings
+
+BookingForEmployee = namedtuple(
+    'BookingForEmployee', ['booking', 'employee_id'])
 
 
 @dataclass(frozen=True)
@@ -20,10 +26,11 @@ class HomeState(State):
     error: Optional[str]
     booking_list: Optional[List[BookingEntity]]
     image: Optional[str]
+    booking_for_employee: Optional[BookingForEmployee]
 
     @classmethod
     def initial_state(cls) -> 'HomeState':
-        return cls(is_loading=None, error=None, booking_list=None, image=None)
+        return cls(is_loading=None, error=None, booking_list=None, image=None, booking_for_employee=None)
 
     @classmethod
     def compare(cls, obj1, obj2):
@@ -36,12 +43,13 @@ class HomeState(State):
                 kwargs[field] = None
         return cls(**kwargs)
 
-    def mutate(self, is_loading=None, error=None, booking_list=None, image=None):
+    def mutate(self, is_loading=None, error=None, booking_list=None, image=None, booking_for_employee=None):
         mutated_state = HomeState(
             is_loading=is_loading if is_loading is not None else self.is_loading,
             error=error if error is not None else self.error,
             booking_list=booking_list if booking_list is not None else self.booking_list,
             image=image if image is not None else self.image,
+            booking_for_employee=booking_for_employee if booking_for_employee is not None else self.booking_for_employee,
         )
         return mutated_state
 
@@ -61,6 +69,9 @@ class HomeViewModel:
         self.model_downloader_usecase = application_container.domain.container.model_downloader_usecase()
         self.booking_cache_usecase = application_container.domain.container.booking_cache_usecase()
         self.booking_update_scheduler_usecase = application_container.domain.container.booking_update_scheduler_usecase()
+        self.consume_meal_usecase = application_container.domain.container.consume_meal_usecase()
+        self.employee_onboard_notify_usecase = application_container.domain.container.employee_onboard_notify_usecase()
+        self._action_timeout_task = None
 
     def __del__(self):
         self.stop_face_recognition()
@@ -107,8 +118,39 @@ class HomeViewModel:
             await self._state_callback(state)
 
     async def _on_match(self, employee_id: str):
+        if self.current_state.booking_for_employee is not None and self.current_state.booking_for_employee.employee_id == employee_id:
+            return
+
         booking = self._find_bookings(employee_id=employee_id)
+        booking_for_employee = BookingForEmployee(
+            booking=booking, employee_id=employee_id)
+
+        state = self.current_state.mutate(
+            booking_for_employee=booking_for_employee)
+        if self._state_callback:
+            await self._state_callback(state)
+            await self._start_meal_consume_action_timeout(
+                timeout=settings.meal_select_action_timeout)
+
         logger.debug("Got a match")
+
+    async def _start_meal_consume_action_timeout(self, timeout):
+        async def delayed_execution(timeout):
+            try:
+                await asyncio.sleep(timeout)
+                booking_for_employee = BookingForEmployee(
+                    booking=None, employee_id=None)
+                state = self.current_state.mutate(
+                    booking_for_employee=booking_for_employee)
+                if self._state_callback:
+                    await self._state_callback(state)
+            except asyncio.CancelledError:
+                logger.debug("The delayed_execution was cancelled!")
+
+        if self._action_timeout_task is not None:
+            self._action_timeout_task.cancel()
+        self._action_timeout_task = asyncio.create_task(
+            delayed_execution(timeout=timeout))
 
     def _find_bookings(self, employee_id: str) -> Optional[BookingEntity]:
         booking_map = self.booking_cache_usecase.get_cached_booking()
@@ -198,6 +240,14 @@ class HomeViewModel:
 
     def notify_onboarding_successful(self):
         employee_list = self.onboarded_employee_list
+
+    def consume_breakfast(self):
+        self.consume_meal_usecase.run(
+            employee_id="", meals=[MealType.BREAKFAST.value])
+
+    def consume_lunch(self):
+        self.consume_meal_usecase.run(
+            employee_id="", meals=[MealType.LUNCH.value])
 
     def change_loading_state(self, is_loading: bool):
         new_state = self.current_state.mutate(is_loading=is_loading)

@@ -48,8 +48,9 @@ class FaceRecognizer:
             return
 
         face_image, bbox = self._face_extractor(frame=frame)
-        is_live = self._fas_detector.liveness_detector(
-            face_image=face_image)
+        # is_live = self._fas_detector.liveness_detector(
+        #     face_image=face_image)
+        is_live = True
         await self._update_image_for_viewing(frame=frame, bbox=bbox, is_live=is_live)
 
         if face_image is not None and is_live is not None and is_live:

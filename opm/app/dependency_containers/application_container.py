@@ -18,6 +18,8 @@ class ApplicationContainer(containers.DeclarativeContainer):
         booking_sqs_remote_datasource_dependency=remote_data.container.booking_sqs_remote_datasource,
         model_sqs_remote_datasource_dependency=remote_data.container.model_sqs_remote_datasource,
         model_downloader_remote_datasource_dependency=remote_data.container.model_downloader_remote_datasource,
+        consume_meal_service_dependency=remote_data.container.comsume_meal_service,
+        employee_onboard_notify_service_dependency=remote_data.container.employee_onboard_notify_service,
     )
 
     def __del__(self):

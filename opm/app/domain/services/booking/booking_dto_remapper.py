@@ -1,5 +1,6 @@
 from ....data.model.booking.booking_dto import BookingDTO, BookingStatus
 from ....domain.entities.booking_entity import BookingEntity
+from ....domain.entities.meal_type import MealType
 
 
 class BookingRemapper:
@@ -10,8 +11,10 @@ class BookingRemapper:
             booking.email,
             booking.employee_id,
             booking.is_emergency,
-            booking.booked_meals,
-            booking.consumed_meals
+            [MealType[meal.name]
+                for meal in booking.booked_meals] if booking.booked_meals is not None else [],
+            [MealType[meal.name]
+                for meal in booking.consumed_meals] if booking.consumed_meals is not None else []
         )
 
     @staticmethod
