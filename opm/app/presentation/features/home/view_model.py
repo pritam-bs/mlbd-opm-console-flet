@@ -1,36 +1,60 @@
 
 from dataclasses import dataclass
 
-from ..domain.error.app_error import AppException
-from ..dependency_containers.application_container import application_container_provider
-from ..core.abstractions import State
-from ..domain.entities.booking_entity import BookingEntity
-from ..domain.entities.model_update_entity import ModelUpdateEntity
-from ..domain.entities.booking_update_entity import BookingUpdateListEntity
-from ..domain.entities.meal_entity_type import MealEntityType
+from ....domain.error.app_error import AppException
+from ....dependency_containers.application_container import application_container_provider
+from ....core.abstractions import State
+from ....domain.entities.booking_entity import BookingEntity
+from ....domain.entities.model_update_entity import ModelUpdateEntity
+from ....domain.entities.booking_update_entity import BookingUpdateListEntity
+from ....domain.entities.meal_entity_type import MealEntityType
 
-from typing import Dict, Optional, List, Callable
+from typing import Dict, NamedTuple, Optional, List, Callable
 from loguru import logger
-from ..core.state_driver import StateDriver
+from ....core.state_driver import StateDriver
 import asyncio
-from collections import namedtuple
-from ..settings.settings import settings
+from ....settings.settings import settings
+from enum import Enum
 
-BookingForEmployee = namedtuple(
-    'BookingForEmployee', ['booking', 'employee_id'])
+
+class BookingForEmployee(NamedTuple):
+    booking: Optional[BookingEntity]
+    employee_id: Optional[str]
+
+
+class MealConsumeRequestStatus(NamedTuple):
+    meal: Optional[MealEntityType]
+    is_success: Optional[bool]
+
+
+class RequestType(Enum):
+    meal_consume_request = "meal_consume_request",
+    booking_request = "booking_request"
 
 
 @dataclass(frozen=True)
 class HomeState(State):
-    is_loading: Optional[bool]
-    error: Optional[str]
+    is_meal_consume_request_in_progress: Optional[bool]
+    meal_consume_request_error: Optional[str]
+    is_booking_list_request_in_progress: Optional[bool]
+    booking_list_request_error: Optional[str]
     booking_list: Optional[List[BookingEntity]]
     image: Optional[str]
     booking_for_employee: Optional[BookingForEmployee]
+    meal_consume_request_status: Optional[MealConsumeRequestStatus]
 
     @classmethod
     def initial_state(cls) -> 'HomeState':
-        return cls(is_loading=None, error=None, booking_list=None, image=None, booking_for_employee=None)
+        return cls(
+            is_meal_consume_request_in_progress=None,
+            meal_consume_request_error=None,
+            is_booking_list_request_in_progress=None,
+            booking_list_request_error=None,
+            booking_list=None,
+            image=None,
+            booking_for_employee=None,
+            meal_consume_request_status=None
+        )
 
     @classmethod
     def compare(cls, obj1, obj2):
@@ -43,13 +67,26 @@ class HomeState(State):
                 kwargs[field] = None
         return cls(**kwargs)
 
-    def mutate(self, is_loading=None, error=None, booking_list=None, image=None, booking_for_employee=None):
+    def mutate(
+        self,
+        is_meal_consume_request_in_progress=None,
+        meal_consume_request_error=None,
+        is_booking_list_request_in_progress=None,
+        booking_list_request_error=None,
+        booking_list=None,
+        image=None,
+        booking_for_employee=None,
+        meal_consume_request_status=None
+    ):
         mutated_state = HomeState(
-            is_loading=is_loading if is_loading is not None else self.is_loading,
-            error=error if error is not None else self.error,
+            is_meal_consume_request_in_progress=is_meal_consume_request_in_progress if is_meal_consume_request_in_progress is not None else self.is_meal_consume_request_in_progress,
+            meal_consume_request_error=meal_consume_request_error if meal_consume_request_error is not None else self.meal_consume_request_error,
+            is_booking_list_request_in_progress=is_booking_list_request_in_progress if is_booking_list_request_in_progress is not None else self.is_booking_list_request_in_progress,
+            booking_list_request_error=booking_list_request_error if booking_list_request_error is not None else self.booking_list_request_error,
             booking_list=booking_list if booking_list is not None else self.booking_list,
             image=image if image is not None else self.image,
             booking_for_employee=booking_for_employee if booking_for_employee is not None else self.booking_for_employee,
+            meal_consume_request_status=meal_consume_request_status if meal_consume_request_status is not None else self.meal_consume_request_status,
         )
         return mutated_state
 
@@ -92,7 +129,7 @@ class HomeViewModel:
         try:
             booking_list = await self.get_booking_usecase.run()
             new_state = self.current_state.mutate(
-                is_loading=False, booking_list=booking_list)
+                booking_list=booking_list, is_booking_list_request_in_progress=False, booking_list_request_error="")
             return new_state
         except AppException as app_exception:
             error = app_exception.error
@@ -101,8 +138,8 @@ class HomeViewModel:
                 message = error.content.get("message", None)
                 code = error.content.get("code", None)
                 data = error.content.get("data", None)
-            new_state = self.current_state.mutate(
-                error=message, is_loading=False)
+            new_state = self.current_state.mutate(booking_list=[],
+                                                  booking_list_request_error=message, is_booking_list_request_in_progress=False)
             return new_state
 
     def start_face_recognition(self):
@@ -124,15 +161,14 @@ class HomeViewModel:
         booking = self._find_bookings(employee_id=employee_id)
         booking_for_employee = BookingForEmployee(
             booking=booking, employee_id=employee_id)
-
+        meal_consume_request_status = MealConsumeRequestStatus(
+            meal=None, is_success=None)
         state = self.current_state.mutate(
-            booking_for_employee=booking_for_employee)
+            booking_for_employee=booking_for_employee, meal_consume_request_status=meal_consume_request_status)
         if self._state_callback:
             await self._state_callback(state)
             await self._start_meal_consume_action_timeout(
                 timeout=settings.meal_select_action_timeout)
-
-        logger.debug("Got a match")
 
     async def _start_meal_consume_action_timeout(self, timeout):
         async def delayed_execution(timeout):
@@ -140,8 +176,10 @@ class HomeViewModel:
                 await asyncio.sleep(timeout)
                 booking_for_employee = BookingForEmployee(
                     booking=None, employee_id=None)
+                meal_consume_request_status = MealConsumeRequestStatus(
+                    meal=None, is_success=None)
                 state = self.current_state.mutate(
-                    booking_for_employee=booking_for_employee)
+                    booking_for_employee=booking_for_employee, meal_consume_request_status=meal_consume_request_status)
                 if self._state_callback:
                     await self._state_callback(state)
             except asyncio.CancelledError:
@@ -243,18 +281,70 @@ class HomeViewModel:
 
     async def consume_breakfast(self):
         employee_id = self.current_state.booking_for_employee.employee_id
-        await self.consume_meal_usecase.run(
-            employee_id=employee_id, meals=[MealEntityType.BREAKFAST])
+        try:
+            is_success = await self.consume_meal_usecase.run(employee_id=employee_id, meals=[MealEntityType.BREAKFAST])
+            meal_consume_request_status = MealConsumeRequestStatus(
+                meal=MealEntityType.BREAKFAST, is_success=is_success)
+            booking_for_employee = BookingForEmployee(
+                booking=None, employee_id=None)
+            new_state = self.current_state.mutate(booking_for_employee=booking_for_employee,
+                                                  meal_consume_request_status=meal_consume_request_status, is_meal_consume_request_in_progress=False)
+            return new_state
+        except AppException as app_exception:
+            error = app_exception.error
+            status = error.status_code
+            if error.content:
+                message = error.content.get("message", None)
+                code = error.content.get("code", None)
+                data = error.content.get("data", None)
+            meal_consume_request_status = MealConsumeRequestStatus(
+                meal=MealEntityType.BREAKFAST, is_success=False)
+            booking_for_employee = BookingForEmployee(
+                booking=None, employee_id=None)
+            new_state = self.current_state.mutate(booking_for_employee=booking_for_employee,
+                                                  meal_consume_request_error=message, is_meal_consume_request_in_progress=False, meal_consume_request_status=meal_consume_request_status)
+            return new_state
 
     async def consume_lunch(self):
         employee_id = self.current_state.booking_for_employee.employee_id
-        await self.consume_meal_usecase.run(
-            employee_id=employee_id, meals=[MealEntityType.LUNCH])
+        try:
+            is_success = await self.consume_meal_usecase.run(employee_id=employee_id, meals=[MealEntityType.LUNCH])
+            meal_consume_request_status = MealConsumeRequestStatus(
+                meal=MealEntityType.LUNCH, is_success=is_success)
+            booking_for_employee = BookingForEmployee(
+                booking=None, employee_id=None)
+            new_state = self.current_state.mutate(booking_for_employee=booking_for_employee,
+                                                  meal_consume_request_status=meal_consume_request_status, is_meal_consume_request_in_progress=False)
+            return new_state
+        except AppException as app_exception:
+            error = app_exception.error
+            status = error.status_code
+            if error.content:
+                message = error.content.get("message", None)
+                code = error.content.get("code", None)
+                data = error.content.get("data", None)
+            meal_consume_request_status = MealConsumeRequestStatus(
+                meal=MealEntityType.LUNCH, is_success=False)
+            booking_for_employee = BookingForEmployee(
+                booking=None, employee_id=None)
+            new_state = self.current_state.mutate(booking_for_employee=booking_for_employee,
+                                                  meal_consume_request_error=message, is_meal_consume_request_in_progress=False, meal_consume_request_status=meal_consume_request_status)
+            return new_state
 
-    def change_loading_state(self, is_loading: bool):
-        new_state = self.current_state.mutate(is_loading=is_loading)
+    def change_loading_state(self, is_loading: bool, request: RequestType):
+        if request is RequestType.booking_request:
+            new_state = self.current_state.mutate(
+                is_booking_list_request_in_progress=is_loading)
+        elif request is RequestType.meal_consume_request:
+            new_state = self.current_state.mutate(
+                is_meal_consume_request_in_progress=is_loading)
         return new_state
 
-    def clear_error(self, state: HomeState):
-        new_state = state.mutate(error="")
+    def clear_error(self, request: RequestType):
+        if request is RequestType.booking_request:
+            new_state = self.current_state.mutate(
+                booking_list_request_error="")
+        elif request is RequestType.meal_consume_request:
+            new_state = self.current_state.mutate(
+                meal_consume_request_error="")
         return new_state

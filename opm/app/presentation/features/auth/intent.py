@@ -1,9 +1,5 @@
-from ..core.state_driver import StateDriver
-from ..auth.view_model import SplashState
-from ..core.abstractions import BaseView
-from ..auth.view_model import SplashViewModel
-from rx.disposable import Disposable
-from typing import List
+from ....core.abstractions import BaseView
+from ....presentation.features.auth.view_model import SplashViewModel
 
 
 class SplashIntent:

@@ -47,7 +47,7 @@ class ViewParams:
     """Parameters for Views"""
 
     navigate_to_route: Callable
-    show_snack: Callable
+    show_snack: Callable[..., None]
     dialog_controller: Callable
     client_storage: ClientStorage
     vertical_alignment_in_parent: str = START_ALIGNMENT
@@ -73,7 +73,7 @@ class BaseView(ABC, UserControl):
     def __init__(self, params: ViewParams):
         super().__init__()
         self.navigate_to_route = params.navigate_to_route
-        self.show_snack: Callable[[str, bool], None] = params.show_snack
+        self.show_snack: Callable[..., None] = params.show_snack
         self.dialog_controller = params.dialog_controller
         self.vertical_alignment_in_parent = params.vertical_alignment_in_parent
         self.horizontal_alignment_in_parent = params.horizontal_alignment_in_parent

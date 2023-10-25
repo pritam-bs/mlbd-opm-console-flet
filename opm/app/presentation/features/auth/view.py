@@ -1,12 +1,11 @@
-from opm.app.core.res import fonts, image_paths
-from ..auth.view_model import SplashState
-from ..core.abstractions import BaseView, ViewParams
+from ....core.res import fonts, image_paths
+from ....presentation.features.auth.view_model import SplashState
+from ....core.abstractions import BaseView, ViewParams
 from typing import Optional
-from ..routes.route import HOME_SCREEN
-from ..core import views
-from ..core import utils
-from ..core.res import dimens
-from ..auth.intent import SplashIntent
+from ....routes.route import HOME_SCREEN
+from ....core import views, utils
+from ....core.res import dimens
+from ....presentation.features.auth.intent import SplashIntent
 from loguru import logger
 
 from flet import (

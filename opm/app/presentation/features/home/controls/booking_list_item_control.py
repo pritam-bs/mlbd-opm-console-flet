@@ -12,7 +12,7 @@ from flet import (
     MainAxisAlignment,
 )
 
-from ...domain.entities.booking_entity import BookingEntity
+from .....domain.entities.booking_entity import BookingEntity
 
 
 class BookingListItemControl(UserControl):

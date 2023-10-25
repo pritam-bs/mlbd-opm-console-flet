@@ -9,7 +9,7 @@ from flet import (
     View,
 )
 from loguru import logger
-from opm.app.auth.view import SplashScreen
+from opm.app.presentation.features.auth.view import SplashScreen
 from opm.app.core.abstractions import BaseView, ViewParams
 from opm.app.core.client_storage_impl import ClientStorageImpl
 from opm.app.core.res.colors import BLACK_COLOR_ALT, ERROR_COLOR, PRIMARY_COLOR, WHITE_COLOR
@@ -21,7 +21,7 @@ from opm.app.core.route_view import RouteView
 from opm.app.core.utils import AlertDialogControls
 from opm.app.core.views import Heading
 from opm.app.error_views.page_not_found_screen import ErrorScreen
-from opm.app.home.view import HomeScreen
+from opm.app.presentation.features.home.view import HomeScreen
 from opm.app.routes.route import HOME_SCREEN, SPLASH_SCREEN
 
 
@@ -68,7 +68,7 @@ class OpmApp:
         self.page.theme_mode = mode.value
         self.page.update_async()
 
-    def show_snack(
+    async def show_snack(
         self,
         message: str,
         is_error: bool = False,
@@ -78,7 +78,7 @@ class OpmApp:
         """callback function used by views to display a snack bar message"""
         if self.page.snack_bar and self.page.snack_bar.open:
             self.page.snack_bar.open = False
-            self.page.update_async()
+            await self.page.update_async()
         self.page.snack_bar = SnackBar(
             Heading(
                 title=message,
@@ -91,9 +91,9 @@ class OpmApp:
             on_action=action_callback,
         )
         self.page.snack_bar.open = True
-        self.page.update_async()
+        await self.page.update_async()
 
-    def control_alert_dialog(
+    async def control_alert_dialog(
         self,
         dialog: Optional[AlertDialog] = None,
         control: AlertDialogControls = AlertDialogControls.CLOSE,
@@ -103,16 +103,16 @@ class OpmApp:
             if self.page.dialog:
                 # make sure no two dialogs attempt to open at once
                 self.page.dialog.open = False
-                self.page.update_async()
+                await self.page.update_async()
             if dialog:
                 self.page.dialog = dialog
                 dialog.open = True
-                self.page.update_async()
+                await self.page.update_async()
 
         if control.value == AlertDialogControls.CLOSE.value:
             if self.page.dialog:
                 dialog.open = False
-                self.page.update_async()
+                await self.page.update_async()
 
     async def change_route(self, to_route: str, data: Optional[any] = None):
         """navigates to a new route"""

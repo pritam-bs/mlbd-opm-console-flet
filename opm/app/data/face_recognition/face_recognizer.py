@@ -8,7 +8,7 @@ from ...data.face_recognition.knn_search.knn_search import KnnSearch
 from ...data.face_recognition.fas.fas_detector import FasDetector
 from ...data.face_recognition.face_detector.cascade_face_detector import CascadeDetector
 from ...data.face_recognition.image_capture.capture_image import CaptureImage
-from ...data.utils.repetitive_timer import RepetitiveTimer
+from ...utils.repetitive_timer import RepetitiveTimer
 from loguru import logger
 
 # Define a type alias for the callable

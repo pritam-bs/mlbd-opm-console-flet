@@ -1,32 +1,22 @@
 from flet import (
     Row,
-    Card,
-    UserControl,
     Container,
     Column,
-    Text,
     colors,
-    TextThemeStyle,
-    border,
-    alignment,
     MainAxisAlignment,
     CrossAxisAlignment,
-    Stack,
-    ProgressRing,
-    OnScrollEvent,
-    ListView
 )
 from typing import Optional
 
 from loguru import logger
 
 from opm.app.core.views import BodyText
-from ..home.view_model import HomeState
-from ..home.intent import HomeIntent
-from ..core.abstractions import BaseView, ViewParams
-from ..home.controls.booking_list_control import BookingListControl
-from ..home.controls.face_recognition_control import FaceRecognitionControl
-from ..core.res.dimens import DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
+from ....presentation.features.home.view_model import HomeState
+from ....presentation.features.home.intent import HomeIntent
+from ....core.abstractions import BaseView, ViewParams
+from ....presentation.features.home.controls.booking_list_control import BookingListControl
+from ....presentation.features.home.controls.face_recognition_control import FaceRecognitionControl
+from ....core.res.dimens import DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT
 
 
 class HomeScreen(BaseView):
@@ -37,7 +27,6 @@ class HomeScreen(BaseView):
         super().__init__(params=params)
         self.keep_back_stack = False  # User cannot go back from this screen
         self.intent = HomeIntent()
-        self.client_storage = params.client_storage
         self.page_height = DEFAULT_WINDOW_HEIGHT
         self.page_width = DEFAULT_WINDOW_WIDTH
 
@@ -68,8 +57,9 @@ class HomeScreen(BaseView):
     def build(self):
         logger.info("Building Home view")
         self._booking_list_control = BookingListControl(intent=self.intent)
+        snack = self.show_snack
         self._face_recognition_control = FaceRecognitionControl(
-            intent=self.intent)
+            intent=self.intent, show_snack=self.show_snack)
 
         self._list_container = Container(
             content=self._booking_list_control,

@@ -4,46 +4,38 @@ from flet import (
     UserControl,
     Container,
     Column,
-    Text,
     colors,
-    TextThemeStyle,
-    border,
     alignment,
     MainAxisAlignment,
     CrossAxisAlignment,
     Stack,
     ProgressRing,
-    OnScrollEvent,
-    ListView,
     Image,
-    icons,
     ImageFit,
-    ElevatedButton,
     ProgressRing,
 )
 
-from ...core.res.fonts import HEADLINE_3_SIZE
-from ...home.intent import HomeIntent
-from ...home.view_model import HomeState
-from ...core.views import Heading, HeadingWithSubheading, FilledButton
-from ...core.res.image_paths import camera_img_path
-from ...domain.entities.booking_entity import BookingEntity, MealEntityType
-from typing import Optional, Tuple
-from ...core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
+from .....core.res.fonts import HEADLINE_3_SIZE
+from .....presentation.features.home.intent import HomeIntent
+from .....presentation.features.home.view_model import HomeState, RequestType, BookingForEmployee
+from .....core.views import Heading, HeadingWithSubheading, PrimaryButton
+from .....core.res.image_paths import camera_img_path
+from .....domain.entities.booking_entity import BookingEntity, MealEntityType
+from typing import Callable, Optional
+from .....core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
 from loguru import logger
-from collections import namedtuple
-
-BookingForEmployee = namedtuple(
-    'BookingForEmployee', ['booking', 'employee_id'])
 
 
 class FaceRecognitionControl(UserControl):
     def __init__(
         self,
-        intent: HomeIntent
+        intent: HomeIntent,
+        show_snack: Callable[[
+            str, bool, Optional[str], Optional[Callable]], None]
     ):
         super().__init__()
         self.intent = intent
+        self.show_snack = show_snack
         self.page_width = DEFAULT_WINDOW_WIDTH
         self.page_height = DEFAULT_WINDOW_HEIGHT
         self.is_mounted = False
@@ -168,17 +160,15 @@ class FaceRecognitionControl(UserControl):
                         ),
                         Row(
                             controls=[
-                                FilledButton(
-                                    text="Breakfast",
+                                PrimaryButton(
+                                    label="Breakfast",
                                     width=150,
-                                    height=40,
                                     disabled=is_breakfast_disabled,
                                     on_click=self._breakfast_button_on_click,
                                 ),
-                                FilledButton(
-                                    text="Lunch",
+                                PrimaryButton(
+                                    label="Lunch",
                                     width=150,
-                                    height=40,
                                     disabled=is_lunch_disabled,
                                     on_click=self._lunch_button_on_click,
                                 ),
@@ -202,6 +192,9 @@ class FaceRecognitionControl(UserControl):
     async def _lunch_button_on_click(self, e):
         await self.intent.consume_lunch()
 
+    async def _show_snack(self, message: str, is_error: bool):
+        await self.show_snack(message, is_error)
+
     async def update_control(self, state: HomeState, prev_state: Optional[HomeState]):
         if self.is_mounted == False:
             return
@@ -210,9 +203,28 @@ class FaceRecognitionControl(UserControl):
             self._face_preview.src_base64 = state.image
 
         compared_state = HomeState.compare(prev_state, state)
+
         if compared_state.booking_for_employee:
             self._booking_info_container.content = self._get_booking_info_container(
                 booking_for_employee=compared_state.booking_for_employee, is_in_progress=False)
+
+        if compared_state.is_meal_consume_request_in_progress:
+            self._booking_info_container.content = self._get_booking_info_container(
+                booking_for_employee=state.booking_for_employee, is_in_progress=True)
+        if compared_state.is_meal_consume_request_in_progress is not None and compared_state.is_meal_consume_request_in_progress == False:
+            self._booking_info_container.content = self._get_booking_info_container(
+                booking_for_employee=state.booking_for_employee, is_in_progress=False)
+
+        if compared_state.meal_consume_request_status and compared_state.meal_consume_request_status.is_success:
+            message = f"Your {compared_state.meal_consume_request_status.meal.value} consumption request has been accepted."
+            await self._show_snack(message=message, is_error=False)
+
+        if compared_state.meal_consume_request_error is not None and compared_state.meal_consume_request_error is not "":
+            error = f"Error: {compared_state.meal_consume_request_error}"
+            logger.debug(error)
+            await self._show_snack(message=error, is_error=True)
+            await self.intent._clear_error(request=RequestType.meal_consume_request)
+
         await self.update_async()
 
     async def on_window_resized_listener(self, width, height):

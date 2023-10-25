@@ -1,13 +1,9 @@
 from flet import (
-    Row,
     Card,
     UserControl,
     Container,
     Column,
-    Text,
     colors,
-    TextThemeStyle,
-    border,
     alignment,
     MainAxisAlignment,
     CrossAxisAlignment,
@@ -18,14 +14,13 @@ from flet import (
 )
 from typing import List
 from loguru import logger
-from enum import Enum
 
-from ...home.intent import HomeIntent
-from ...home.controls.booking_list_item_control import BookingListItemControl
-from ...core.views import SecondaryButton, BodyText
-from ...domain.entities.booking_entity import BookingEntity, MealEntityType
-from ...home.view_model import HomeState
-from ...core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
+from .....presentation.features.home.intent import HomeIntent
+from .....presentation.features.home.controls.booking_list_item_control import BookingListItemControl
+from .....core.views import SecondaryButton, BodyText
+from .....domain.entities.booking_entity import BookingEntity, MealEntityType
+from .....presentation.features.home.view_model import HomeState
+from .....core.res.dimens import DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH
 
 
 class BookingListControl(UserControl):
@@ -187,11 +182,13 @@ class BookingListControl(UserControl):
             return
 
         compared_state = HomeState.compare(prev_state, state)
-        if compared_state.is_loading is not None:
-            logger.debug(f"_update_progress_view: {compared_state.is_loading}")
+        if compared_state.is_booking_list_request_in_progress:
             self._update_progress_view(
-                is_in_progress=compared_state.is_loading)
-        if compared_state.booking_list is not None or compared_state.error is not None:
+                is_in_progress=True)
+        else:
+            self._update_progress_view(
+                is_in_progress=False)
+        if compared_state.booking_list is not None:
             self._booking_list = compared_state.booking_list if compared_state.booking_list is not None else []
             self._update_booking_list()
             self._update_refresh_view()
