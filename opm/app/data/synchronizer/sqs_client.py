@@ -4,14 +4,14 @@ from ...settings.settings import settings
 from aiobotocore.session import get_session
 from aiobotocore.session import AioSession
 import botocore.exceptions
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, List, Optional
 from loguru import logger
 import json
 import asyncio
 
 # Define a type alias for the callable
-BookingUpdateFunc = Callable[[BookingUpdateListDTO], None]
-ModelUpdateFunc = Callable[[ModelUpdateDTO], None]
+BookingUpdateFunc = Callable[[BookingUpdateListDTO, List[str]], None]
+ModelUpdateFunc = Callable[[ModelUpdateDTO, List[str]], None]
 
 
 class SqsClient:
@@ -63,6 +63,14 @@ class SqsClient:
         self.model_update_listener.stop_listening()
         self.model_update_listener = None
 
+    async def delete_booking_update_messages(self, receipt_handle_list: List[str]):
+        await self.booking_update_listener.delete_messages(
+            receipt_handle_list=receipt_handle_list)
+
+    async def delete_model_update_messages(self, receipt_handle_list: List[str]):
+        await self.model_update_listener.delete_messages(
+            receipt_handle_list=receipt_handle_list)
+
 
 class AsyncSqsListener:
 
@@ -110,31 +118,48 @@ class AsyncSqsListener:
                 )
                 messages = message_response.get('Messages', [])
                 message_bodies = []
+                receipt_handle_list = []
                 for message in messages:
                     receipt_handle = message['ReceiptHandle']
                     message_body = message['Body']
                     try:
                         data_dict = json.loads(message_body)
                         message_bodies.append(data_dict)
-                        await client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+                        receipt_handle_list.append(receipt_handle)
                     except Exception as err:
                         logger.debug(err)
                 if len(message_bodies) > 0:
-                    await self.handle_messages(message_bodies)
+                    await self.handle_messages(message_bodies, receipt_handle_list)
                 await asyncio.sleep(self.interval)
 
-    async def handle_messages(self, messages):
+    async def handle_messages(self, messages, receipt_handle_list):
         raise NotImplementedError
 
     def stop_listening(self):
         self.is_polling = False
 
-    def _is_valid_json(self, data_str):
-        try:
-            json.loads(data_str)
-            return True
-        except json.JSONDecodeError:
-            return False
+    async def delete_messages(self, receipt_handle_list: List[str]):
+        session = get_session()
+        async with session.create_client('sqs', region_name=self.region_name,
+                                         aws_access_key_id=self.aws_access_key,
+                                         aws_secret_access_key=self.aws_secret_key) as client:
+            try:
+                message_response = await client.get_queue_url(QueueName=self.queue_name)
+            except botocore.exceptions.ClientError as err:
+                if (
+                    err.response['Error']['Code'] == 'AWS.SimpleQueueService.NonExistentQueue'
+                ):
+                    logger.debug(f"Queue {self.queue_name} does not exist")
+                else:
+                    logger.debug(err)
+                return
+
+            queue_url = message_response['QueueUrl']
+            try:
+                for receipt_handle in receipt_handle_list:
+                    await client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+            except Exception as err:
+                logger.debug(err)
 
 
 class ModelUpdateListener(AsyncSqsListener):
@@ -142,10 +167,10 @@ class ModelUpdateListener(AsyncSqsListener):
         super().__init__(**kwargs)
         self.on_model_update = on_model_update
 
-    async def handle_messages(self, messages):
+    async def handle_messages(self, messages, receipt_handle_list):
         if self.on_model_update:
             model_change_dto = ModelUpdateDTO.from_dict(dict=messages)
-            self.on_model_update(model_change_dto)
+            self.on_model_update(model_change_dto, receipt_handle_list)
 
 
 class BookingUpdateListener(AsyncSqsListener):
@@ -153,7 +178,7 @@ class BookingUpdateListener(AsyncSqsListener):
         super().__init__(**kwargs)
         self.on_booking_update = on_booking_update
 
-    async def handle_messages(self, messages):
+    async def handle_messages(self, messages, receipt_handle_list):
         if self.on_booking_update:
-            booking_change_dto = BookingUpdateListDTO.from_dict(dict=messages)
-            await self.on_booking_update(booking_change_dto)
+            booking_change_dto = BookingUpdateListDTO.from_dict(data=messages)
+            await self.on_booking_update(booking_change_dto, receipt_handle_list)

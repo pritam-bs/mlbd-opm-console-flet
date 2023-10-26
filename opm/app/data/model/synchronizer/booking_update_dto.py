@@ -41,11 +41,11 @@ class BookingUpdateListDTO(BaseModel):
             logger.debug(f"Value error: {e}")
 
     @classmethod
-    def from_dict(cls, dict: List[Dict]):
+    def from_dict(cls, data: List[Dict]):
         try:
             type_adapter = TypeAdapter(List[BookingUpdateDTO])
             booking_update_list = type_adapter.validate_python(
-                dict, strict=None)
+                data, strict=None)
             model_update_list_dto = BookingUpdateListDTO(
                 booking_update_list=booking_update_list)
             return model_update_list_dto

@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 from ....data.model.synchronizer.booking_update_dto import BookingUpdateListDTO
 from ...entities.booking_update_entity import BookingUpdateListEntity
 
 # Define a type alias for the callable
-BookingUpdateFunc = Callable[[BookingUpdateListEntity], None]
+BookingUpdateFunc = Callable[[BookingUpdateListEntity, List[str]], None]
 
 
 class BookingSqsRepository(ABC):
@@ -15,6 +15,10 @@ class BookingSqsRepository(ABC):
 
     @abstractmethod
     def stop(self):
+        pass
+
+    @abstractmethod
+    async def delete_messages(self, receipt_handle_list: List[str]):
         pass
 
     @abstractmethod

@@ -208,8 +208,9 @@ class HomeViewModel:
     def _stop_model_synchronizer(self):
         self.model_synchronizer_usecase.stop()
 
-    def _on_model_update(self, model_update_entity: ModelUpdateEntity):
+    def _on_model_update(self, model_update_entity: ModelUpdateEntity, receipt_handle_list: List[str]):
         self.onboarded_employee_list: List[NewUserEntity] = model_update_entity.new_employee_list
+        self.model_update_receipt_handle_list = receipt_handle_list
         self._model_downloader_task = asyncio.create_task(
             self._download_model())
 
@@ -220,7 +221,7 @@ class HomeViewModel:
     def _stop_booking_synchronizer(self):
         self.booking_synchronizer_usecase.stop()
 
-    async def _on_booking_update(self, booking_update_list_entity: BookingUpdateListEntity):
+    async def _on_booking_update(self, booking_update_list_entity: BookingUpdateListEntity, receipt_handle_list: List[str]):
         booking_update_list = booking_update_list_entity.booking_update_list
         logger.debug(
             f"Newly booking update count: {len(booking_update_list)}")
@@ -235,6 +236,7 @@ class HomeViewModel:
         state = self.current_state.mutate(booking_list=booking_list)
         if self._state_callback:
             await self._state_callback(state)
+        await self.booking_synchronizer_usecase.delete_message(receipt_handle_list=receipt_handle_list)
 
     def start_synchronizers(self):
         self._booking_synchronizer_task = asyncio.create_task(
@@ -280,6 +282,8 @@ class HomeViewModel:
         employee_list = [
             onboarded_employee.employee_id for onboarded_employee in self.onboarded_employee_list]
         await self.employee_onboard_notify_usecase.run(employee_list=employee_list)
+        await self.model_synchronizer_usecase.delete_message(receipt_handle_list=self.model_update_receipt_handle_list)
+        self.model_update_receipt_handle_list.clear()
 
     async def consume_breakfast(self):
         employee_id = self.current_state.booking_for_employee.employee_id

@@ -1,3 +1,4 @@
+from typing import List
 from opm.app.data.model.synchronizer.booking_update_dto import BookingUpdateListDTO
 from ....domain.services.synchronizer.booking_sqs_repository import BookingUpdateFunc, BookingSqsRepository
 from ....data.services.synchronizer.datasource.remote.booking_sqs_remote_datasource import BookingSqsRemoteDatasource
@@ -17,7 +18,11 @@ class BookingSqsRepositoryImpl(BookingSqsRepository):
     def stop(self):
         self.booking_sqs_remote_datasource.stop()
 
-    async def booking_update_callback(self, booking_update_list_dto: BookingUpdateListDTO):
+    async def delete_messages(self, receipt_handle_list: List[str]):
+        await self.booking_sqs_remote_datasource.delete_messages(
+            receipt_handle_list=receipt_handle_list)
+
+    async def booking_update_callback(self, booking_update_list_dto: BookingUpdateListDTO, receipt_handle_list: List[str]):
         booking_update_entity = BookingUpdateRemapper.map_sqs_dto(
             booking_update_list_dto=booking_update_list_dto)
-        await self.on_booking_update(booking_update_entity)
+        await self.on_booking_update(booking_update_entity, receipt_handle_list)
