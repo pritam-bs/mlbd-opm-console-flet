@@ -112,6 +112,6 @@ class ModelDownloader:
 
         # Call the callback function only if all downloads were successful
         if len(successful_downloads) == len(files_to_download):
-            callback(True)
+            await callback(True)
         else:
-            callback(False)
+            await callback(False)

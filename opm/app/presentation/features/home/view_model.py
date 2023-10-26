@@ -5,7 +5,7 @@ from ....domain.error.app_error import AppException
 from ....dependency_containers.application_container import application_container_provider
 from ....core.abstractions import State
 from ....domain.entities.booking_entity import BookingEntity
-from ....domain.entities.model_update_entity import ModelUpdateEntity
+from ....domain.entities.model_update_entity import ModelUpdateEntity, NewUserEntity
 from ....domain.entities.booking_update_entity import BookingUpdateListEntity
 from ....domain.entities.meal_entity_type import MealEntityType
 
@@ -209,7 +209,7 @@ class HomeViewModel:
         self.model_synchronizer_usecase.stop()
 
     def _on_model_update(self, model_update_entity: ModelUpdateEntity):
-        self.onboarded_employee_list = model_update_entity.new_employee_list
+        self.onboarded_employee_list: List[NewUserEntity] = model_update_entity.new_employee_list
         self._model_downloader_task = asyncio.create_task(
             self._download_model())
 
@@ -271,13 +271,15 @@ class HomeViewModel:
         await self.model_downloader_usecase.download(
             callback=self._on_model_download)
 
-    def _on_model_download(self, is_successful: bool):
+    async def _on_model_download(self, is_successful: bool):
         if is_successful:
             self.face_recognition_usecase.reload_model()
-            self.notify_onboarding_successful()
+            await self.notify_onboarding_successful()
 
-    def notify_onboarding_successful(self):
-        employee_list = self.onboarded_employee_list
+    async def notify_onboarding_successful(self):
+        employee_list = [
+            onboarded_employee.employee_id for onboarded_employee in self.onboarded_employee_list]
+        await self.employee_onboard_notify_usecase.run(employee_list=employee_list)
 
     async def consume_breakfast(self):
         employee_id = self.current_state.booking_for_employee.employee_id

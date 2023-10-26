@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
@@ -8,4 +9,4 @@ class NewUserEntity:
 
 @dataclass
 class ModelUpdateEntity:
-    new_employee_list: [NewUserEntity]
+    new_employee_list: List[NewUserEntity]

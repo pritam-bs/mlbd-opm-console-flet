@@ -9,6 +9,7 @@ class ModelUpdateRemapper:
 
     @staticmethod
     def map_sqs_dto(model_update_dto: ModelUpdateDTO):
-        entities = [ModelUpdateRemapper.map(user)
-                    for user in model_update_dto.onboarded_users]
-        return entities
+        new_users_entity = [ModelUpdateRemapper.map(user)
+                            for user in model_update_dto.onboarded_users]
+        entity = ModelUpdateEntity(new_employee_list=new_users_entity)
+        return entity
