@@ -113,13 +113,15 @@ class AsyncSqsListener:
             while self.is_polling:
                 message_response = await client.receive_message(
                     QueueUrl=queue_url,
-                    WaitTimeSeconds=10,
+                    AttributeNames=['MessageGroupId'],
                     MaxNumberOfMessages=10
                 )
                 messages = message_response.get('Messages', [])
                 message_bodies = []
                 receipt_handle_list = []
                 for message in messages:
+                    if message.get('Attributes', {}).get('MessageGroupId') == "error-opm-face-registration":
+                        continue
                     receipt_handle = message['ReceiptHandle']
                     message_body = message['Body']
                     try:

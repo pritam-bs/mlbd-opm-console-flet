@@ -18,5 +18,4 @@ class BookingEntity:
         if self.consumed_meals is None:
             return False
         is_consumed = self.consumed_meals and meal in self.consumed_meals
-        logger.debug(f"Is {meal.value} consumed: {is_consumed}")
         return is_consumed
