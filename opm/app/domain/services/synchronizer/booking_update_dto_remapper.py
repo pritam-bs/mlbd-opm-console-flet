@@ -12,14 +12,14 @@ from ...entities.booking_update_entity import (
 class BookingUpdateRemapper:
     @staticmethod
     def map(booking_update_dto: BookingUpdateDTO):
-        console_booking_resource = booking_update_dto.console_booking_resource
+        booking_data = booking_update_dto.booking_data
         booking_update_info = BookingUpdateInfoEntity(
-            name=console_booking_resource.name,
-            email=console_booking_resource.email,
-            employee_id=console_booking_resource.employee_id,
-            booked_meals=console_booking_resource.booked_meals,
-            consumed_meals=console_booking_resource.consumed_meals,
-            is_emergency=console_booking_resource.is_emergency
+            name=booking_data.name,
+            email=booking_data.email,
+            employee_id=booking_data.employee_id,
+            booked_meals=booking_data.booked_meals,
+            consumed_meals=booking_data.consumed_meals,
+            is_emergency=booking_data.is_emergency
         )
         return BookingUpdateEntity(
             action=booking_update_dto.action,

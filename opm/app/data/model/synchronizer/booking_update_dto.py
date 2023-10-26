@@ -23,7 +23,7 @@ class BookingUpdateInfoDTO(BaseModel):
 
 class BookingUpdateDTO(BaseModel):
     action: BookingUpdateActionDTO
-    console_booking_resource: BookingUpdateInfoDTO
+    booking_data: BookingUpdateInfoDTO
 
 
 class BookingUpdateListDTO(BaseModel):
