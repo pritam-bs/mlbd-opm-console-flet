@@ -36,24 +36,6 @@ class BookingListControl(UserControl):
         self.page_height = DEFAULT_WINDOW_HEIGHT
         self.page_width = DEFAULT_WINDOW_WIDTH
 
-    @property
-    def total_booked_breakfast(self) -> int:
-        total_booked_breakfast_count = len(
-            [booking for booking in self._booking_list if booking.booked_meals and MealEntityType.BREAKFAST in booking.booked_meals])
-        return total_booked_breakfast_count
-
-    @property
-    def total_booked_lunch(self) -> int:
-        total_booked_lunch_count = len(
-            [booking for booking in self._booking_list if booking.booked_meals and MealEntityType.LUNCH in booking.booked_meals])
-        return total_booked_lunch_count
-
-    @property
-    def total_emergency_count(self) -> int:
-        total_emergency_count = sum(
-            booking.is_emergency for booking in self._booking_list)
-        return total_emergency_count
-
     async def did_mount_async(self):
         await super().did_mount_async()
         self.is_mounted = True
@@ -64,16 +46,19 @@ class BookingListControl(UserControl):
         self.is_mounted = False
 
     def build(self):
+        self._total_breakfast_text = BodyText(
+            text=f"Breakfast: {0}")
+        self._total_lunch_text = BodyText(
+            text=f"Lunch: {0}")
+        self._total_emergench_text = BodyText(
+            text=f"Emergency: {0}")
         self.summary_card = Card(
             Container(
                 content=Column(
                     controls=[
-                        BodyText(
-                            text=f"Breakfast: {self.total_booked_breakfast}"),
-                        BodyText(text=f"Lunch: {self.total_booked_lunch}"),
-                        BodyText(
-                            text=f"Emergency: {self.total_emergency_count}")
-
+                        self._total_breakfast_text,
+                        self._total_lunch_text,
+                        self._total_emergench_text
                     ],
                     alignment=MainAxisAlignment.START,
                     horizontal_alignment=CrossAxisAlignment.STRETCH,
@@ -108,8 +93,6 @@ class BookingListControl(UserControl):
             ),
             visible=False,
             alignment=alignment.center,
-            bgcolor=colors.with_opacity(
-                opacity=0.4, color=colors.ON_PRIMARY),
         )
 
         self._booking_list_container = Container(
@@ -120,7 +103,6 @@ class BookingListControl(UserControl):
                     self._progress_container,
                 ],
             ),
-            bgcolor=colors.RED,
         )
 
         self._list_container = Column(
@@ -177,6 +159,18 @@ class BookingListControl(UserControl):
         else:
             self._refresh_container.visible = False
 
+    def _update_summery_card(self):
+        total_booked_breakfast_count = len(
+            [booking for booking in self._booking_list if booking.booked_meals and MealEntityType.BREAKFAST in booking.booked_meals])
+        total_booked_lunch_count = len(
+            [booking for booking in self._booking_list if booking.booked_meals and MealEntityType.LUNCH in booking.booked_meals])
+        total_emergency_count = sum(
+            booking.is_emergency for booking in self._booking_list)
+
+        self._total_breakfast_text.value = f"Breakfast: {total_booked_breakfast_count}"
+        self._total_lunch_text.value = f"Lunch: {total_booked_lunch_count}"
+        self._total_emergench_text.value = f"Emergency: {total_emergency_count}"
+
     async def update_control(self, state: HomeState, prev_state: HomeState):
         if self.is_mounted == False:
             return
@@ -192,6 +186,7 @@ class BookingListControl(UserControl):
             self._booking_list = compared_state.booking_list if compared_state.booking_list is not None else []
             self._update_booking_list()
             self._update_refresh_view()
+            self._update_summery_card()
 
         await self.update_async()
 

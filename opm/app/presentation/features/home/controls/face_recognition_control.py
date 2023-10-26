@@ -74,7 +74,6 @@ class FaceRecognitionControl(UserControl):
                 spacing=5,
             ),
             width=480,
-            bgcolor=colors.AMBER
         )
 
         return _face_recognition_container

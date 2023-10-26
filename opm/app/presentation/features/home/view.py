@@ -64,7 +64,6 @@ class HomeScreen(BaseView):
         self._list_container = Container(
             content=self._booking_list_control,
             width=300,
-            bgcolor=colors.BLUE,
         )
 
         self._face_recognition_container = Column(
