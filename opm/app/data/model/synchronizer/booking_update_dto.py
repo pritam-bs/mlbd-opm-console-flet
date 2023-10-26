@@ -15,15 +15,15 @@ class BookingUpdateActionDTO(str, Enum):
 class BookingUpdateInfoDTO(BaseModel):
     name: str
     email: str
-    employeeId: str
-    bookedMeals: Optional[List[MealType]] = None
-    consumedMeals: Optional[List[MealType]] = None
-    isEmergency: bool
+    employee_id: str
+    booked_meals: Optional[List[MealType]] = None
+    consumed_meals: Optional[List[MealType]] = None
+    is_emergency: bool
 
 
 class BookingUpdateDTO(BaseModel):
     action: BookingUpdateActionDTO
-    consoleBookingResource: BookingUpdateInfoDTO
+    console_booking_resource: BookingUpdateInfoDTO
 
 
 class BookingUpdateListDTO(BaseModel):
