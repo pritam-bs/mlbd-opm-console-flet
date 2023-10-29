@@ -55,14 +55,14 @@ class FasDetector:
 
     def _predict_v2(self, face_image_bgr):
         blob = cv2.dnn.blobFromImages(
-            [face_image_bgr], 1.0 / self.input_std, self.input_size, self.input_mean, swapRB=True)
+            [face_image_bgr], 1.0 / self.input_std, self.input_size, self.input_mean, swapRB=False)
         outputs = self.inference_session_v2.run(self.outputs_name_v2, {
                                                 self.inference_session_v2.get_inputs()[0].name: blob})
         return outputs[0]
 
     def _predict_v1(self, face_image_bgr):
         blob = cv2.dnn.blobFromImages(
-            [face_image_bgr], 1.0 / self.input_std, self.input_size, self.input_mean, swapRB=True)
+            [face_image_bgr], 1.0 / self.input_std, self.input_size, self.input_mean, swapRB=False)
         outputs = self.inference_session_v1.run(self.outputs_name_v1, {
                                                 self.inference_session_v1.get_inputs()[0].name: blob})
         return outputs[0]
@@ -79,7 +79,10 @@ class FasDetector:
         # label: face is true or fake
         label_v1 = np.argmax(prediction_v1)
         label_v2 = np.argmax(prediction_v2)
-        if label_v1 == 1 or label_v2 == 1:
-            return True
+        if label_v1 == 1 and label_v2 == 1:
+            score_v1 = prediction_v1[0][label_v1]
+            score_v2 = prediction_v2[0][label_v2]
+            if score_v1 > 0.7 and score_v2 > 0.7:
+                return True
         else:
             return False
